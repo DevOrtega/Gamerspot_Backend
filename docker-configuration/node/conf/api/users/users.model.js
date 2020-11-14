@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const USERschemaOptions = {
+const USERSchemaOptions = {
 	versionKey: false
 }
 
@@ -62,7 +62,7 @@ const USERschema = mongoose.Schema({
             ref: 'post'
         }
     ]
-}, USERschemaOptions);
+}, USERSchemaOptions);
 
 const USER = mongoose.model('user', USERschema);
 

@@ -1,8 +1,9 @@
+
 const USERModel = require('./users.model');
+const REFRESHTOKENModel = require('../refreshtokens/refreshtokens.model')
 const POSTModel= require('../posts/posts.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const token_list = {};
 
 module.exports = {getUsers, getUserByUsername, registerUser, loginUser, refreshToken, editUser, deleteUser};
 
@@ -90,12 +91,37 @@ async function loginUser(req, res) {
         return res.status(400).json({ message: "Invalid User Or Password" });
     }
 
-    const token = jwt.sign({ user: response }, process.env.TOKEN_KEY, { expiresIn: 300 });
-    const refresh_token = jwt.sign({ user: response }, process.env.REFRESH_TOKEN_KEY, { expiresIn: 86400 });
+    const token = jwt.sign({ user: response }, process.env.TOKEN_KEY, { expiresIn: 800 });
+    const refresh_token = jwt.sign({ user: response }, process.env.REFRESH_TOKEN_KEY, { expiresIn: 7776000 });
 
-    token_list[refresh_token] = {username: req.body.username, token: token};
+    return REFRESHTOKENModel.find({ 'access_token.username': req.body.username }).countDocuments()
+    .then(async response => {
+      if (response >= 50) {
+        await REFRESHTOKENModel.deleteMany({ 'access_token.username': req.body.username })
+        .catch(error => {
+          return res.status(500).json(error)
+        })
+      }
 
-    return res.json({ token: token, refreshToken: refresh_token });
+      const refresh_token_obj = {
+        refresh_token: refresh_token,
+        access_token: {
+          username: req.body.username,
+          token: token
+        }
+      };
+
+      return REFRESHTOKENModel.create(refresh_token_obj)
+      .then(() => {
+        return res.json({ token: token, refresh_token: refresh_token });
+      })
+      .catch(error => {
+        return res.status(500).json(error)
+      })
+    })
+    .catch(error => {
+      return res.status(500).json(error)
+    })
   })
   .catch(error => {
     return res.status(500).json(error)
@@ -104,27 +130,44 @@ async function loginUser(req, res) {
 
 async function refreshToken(req, res) {
   return USERModel.findOne({ username: req.body.username })
-  .then(response => {
-    if (!response) {
+  .then(user_response => {
+    if (!user_response) {
       return res.status(400).json({ message: "Invalid User Or Password" });
     }
 
-    if (!bcrypt.compareSync(req.body.password, response.password)) {
-        return res.status(400).json({ message: "Invalid User Or Password" });
+    if (!bcrypt.compareSync(req.body.password, user_response.password)) {
+      return res.status(400).json({ message: "Invalid User Or Password" });
     }
 
-    if((req.body.refreshToken) && (req.body.refreshToken in token_list)) {
-      const token = jwt.sign({ user: response }, process.env.TOKEN_KEY, { expiresIn: 300 });
-      
-      token_list[req.body.refreshToken].token = token;
-
-      return res.json({ token: token });       
-    } else {
+    if (!req.body.refresh_token) {
       return res.status(404).json({ message: "Bad Request" });
     }
+
+    return REFRESHTOKENModel.findOne({ refresh_token: req.body.refresh_token })
+    .then(response => {
+      if (!response) return res.status(404).json({ message: "Bad Request" });
+
+      const token = jwt.sign({ user: user_response }, process.env.TOKEN_KEY, { expiresIn: 800 });
+
+      const access_token = {
+        username: req.body.username,
+        token: token
+      };
+
+      return REFRESHTOKENModel.updateOne({ refresh_token: req.body.refresh_token }, { access_token: access_token })
+      .then(() => {
+        return res.json({ token: token });
+      })
+      .catch(error => {
+        return res.status(500).json(error);
+      })
+    })
+    .catch(error => {
+      return res.status(500).json(error);
+    })
   })
   .catch(error => {
-    return res.status(500).json(error)
+    return res.status(500).json(error);
   })
 }
 

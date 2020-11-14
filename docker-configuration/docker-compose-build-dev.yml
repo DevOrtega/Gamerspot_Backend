@@ -1,0 +1,17 @@
+services:
+    nginx:
+        depends_on:
+            - node
+        build: ./nginx/
+        image: 873271/p4t4p:p4t4p_nginx
+        restart: always
+        ports:
+            - "8080:80"
+        container_name: nginx
+    node:
+        build: ./node/
+        image: 873271/p4t4p:p4t4p_node
+        restart: always
+        ports:
+            - "3000:3000"
+        container_name: node
