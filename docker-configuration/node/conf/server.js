@@ -12,11 +12,13 @@ const corsOptions = {
 
 const app = express();
 
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 const usersRouter = require('./api/users/index');
+const postsRouter = require('./api/posts/index');
 
-app.use('/api/users', usersRouter);
+app.use('/users', usersRouter);
+app.use('/posts', postsRouter);
 
 app.listen(3000);
