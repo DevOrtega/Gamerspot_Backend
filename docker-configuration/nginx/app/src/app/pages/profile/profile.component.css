@@ -1,0 +1,6 @@
+.profile {
+  margin: 20px auto;
+  width: 60vw;
+  display: grid;
+  grid-template-columns: 40% 60%;
+}

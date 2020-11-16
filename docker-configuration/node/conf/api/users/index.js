@@ -6,7 +6,8 @@ router.get('/', controller.getUsers);
 router.get('/:username', optionalAuthenticateToken, controller.getUserByUsername);
 router.post('/register', controller.registerUser);
 router.post('/login', controller.loginUser);
-router.post('/token', controller.refreshToken);
+router.post('/refresh-token', controller.refreshToken);
+router.post('/revoke-token', controller.revokeToken);
 router.patch('/:username', authenticateToken, authenticateUser, controller.editUser);
 router.delete('/:username', authenticateToken, authenticateUser, controller.deleteUser);
 
