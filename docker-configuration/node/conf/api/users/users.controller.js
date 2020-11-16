@@ -3,7 +3,6 @@ const REFRESHTOKENModel = require('../refreshtokens/refreshtokens.model')
 const POSTModel= require('../posts/posts.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemon = require('nodemon');
 
 module.exports = {getUsers, getUserByUsername, registerUser, loginUser, refreshToken, revokeToken, editUser, deleteUser};
 
@@ -115,6 +114,7 @@ async function loginUser(req, res) {
       return REFRESHTOKENModel.create(refresh_token_obj)
       .then(() => {
         const cookieOptions = {
+          sameSite: 'strict',
           httpOnly: true,
           maxAge: 90*24*60*60*1000
         };
@@ -184,6 +184,7 @@ async function refreshToken(req, res) {
 
 async function revokeToken(req, res) {
   //try {
+    console.log(req);
     const refresh_token = getCookies(req)['refresh_token'];
 
     return REFRESHTOKENModel.findOneAndDelete({refresh_token: refresh_token})
@@ -290,12 +291,6 @@ function setEditedUserFields(req_body) {
 
 function getCookies(request) {
   var cookies = {};
-
-  if (request.headers && request.headers.cookie) {
-    console.log(request.headers.cookie);
-  } else {
-    console.log("mase");
-  }
 
   request.headers && request.headers.cookie.split(';').forEach(function(cookie) {
     var parts = cookie.match(/(.*?)=(.*)$/)
