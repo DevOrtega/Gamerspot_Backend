@@ -5,8 +5,6 @@ import { UsersService } from 'src/app/services/users/users.service';
 import { CookieService } from 'ngx-cookie-service';
 import { Router } from '@angular/router';
 
-
-
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -26,6 +24,7 @@ export class LoginComponent implements OnInit {
     private cookieService: CookieService
   ) { }
 
+  private cookie;
   ngOnInit() {
     this.loginForm = this.formBuilder.group({
       userName: ['', Validators.required],
@@ -63,7 +62,7 @@ export class LoginComponent implements OnInit {
       password: this.loginForm.value.password
     };
     let data = await this.userService.postToken(userData);
-    localStorage.setItem('token', JSON.stringify(data.token));
+    this.cookieService.get('refresh_token');
     this.router.navigateByUrl(`${userData.username}`);
   }
 
