@@ -1,11 +1,11 @@
-
 const USERModel = require('./users.model');
 const REFRESHTOKENModel = require('../refreshtokens/refreshtokens.model')
 const POSTModel= require('../posts/posts.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemon = require('nodemon');
 
-module.exports = {getUsers, getUserByUsername, registerUser, loginUser, refreshToken, editUser, deleteUser};
+module.exports = {getUsers, getUserByUsername, registerUser, loginUser, refreshToken, revokeToken, editUser, deleteUser};
 
 
 async function getUsers(req, res) {
@@ -80,6 +80,7 @@ async function registerUser(req, res) {
   });
 }
 
+
 async function loginUser(req, res) {
   return USERModel.findOne({ username: req.body.username })
   .then(response => {
@@ -113,7 +114,13 @@ async function loginUser(req, res) {
 
       return REFRESHTOKENModel.create(refresh_token_obj)
       .then(() => {
-        return res.json({ token: token, refresh_token: refresh_token });
+        const cookieOptions = {
+          httpOnly: true,
+          maxAge: 90*24*60*60*1000
+        };
+
+        res.cookie('refresh_token', refresh_token, cookieOptions);
+        return res.json({ token: token });
       })
       .catch(error => {
         return res.status(500).json(error)
@@ -127,6 +134,7 @@ async function loginUser(req, res) {
     return res.status(500).json(error)
   })
 }
+
 
 async function refreshToken(req, res) {
   return USERModel.findOne({ username: req.body.username })
@@ -143,7 +151,9 @@ async function refreshToken(req, res) {
       return res.status(404).json({ message: "Bad Request" });
     }
 
-    return REFRESHTOKENModel.findOne({ refresh_token: req.body.refresh_token })
+    const refresh_token = getCookies(req)['refresh_token'];
+
+    return REFRESHTOKENModel.findOne({ refresh_token: refresh_token })
     .then(response => {
       if (!response) return res.status(404).json({ message: "Bad Request" });
 
@@ -154,7 +164,7 @@ async function refreshToken(req, res) {
         token: token
       };
 
-      return REFRESHTOKENModel.updateOne({ refresh_token: req.body.refresh_token }, { access_token: access_token })
+      return REFRESHTOKENModel.updateOne({ refresh_token: refresh_token }, { access_token: access_token })
       .then(() => {
         return res.json({ token: token });
       })
@@ -169,6 +179,23 @@ async function refreshToken(req, res) {
   .catch(error => {
     return res.status(500).json(error);
   })
+}
+
+
+async function revokeToken(req, res) {
+  //try {
+    const refresh_token = getCookies(req)['refresh_token'];
+
+    return REFRESHTOKENModel.findOneAndDelete({refresh_token: refresh_token})
+    .then(() => {
+      return res.json({message: "Refresh token revoked"});
+    })
+    /*.catch(error => {
+      return res.status(500).json({message: "Puta DB"});
+    })*/
+  /*} catch (error) {
+    return res.status(500).json({message: "Puto try"});
+  }*/
 }
 
 
@@ -260,3 +287,19 @@ function setEditedUserFields(req_body) {
 
   return edited_user;
 }
+
+function getCookies(request) {
+  var cookies = {};
+
+  if (request.headers && request.headers.cookie) {
+    console.log(request.headers.cookie);
+  } else {
+    console.log("mase");
+  }
+
+  request.headers && request.headers.cookie.split(';').forEach(function(cookie) {
+    var parts = cookie.match(/(.*?)=(.*)$/)
+    cookies[ parts[1].trim() ] = (parts[2] || '').trim();
+  });
+  return cookies;
+};

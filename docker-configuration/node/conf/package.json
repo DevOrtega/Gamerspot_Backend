@@ -1,5 +1,5 @@
 {
-  "name": "api-tweets",
+  "name": "p4t4p-back",
   "version": "1.0.0",
   "description": "back-end server users tweets",
   "main": "index.js",
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/DRodriGerrard/Node_API_Tweets#readme",
   "dependencies": {
     "bcrypt": "^5.0.0",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
