@@ -51,7 +51,7 @@ async function getUserByUsername(req, res) {
     });
   } else {
     return USERModel.findOne({username: username})
-    .select('-_id -username -email -password')
+    .select('-_id -email -password')
     .populate('postsId')
     .then(response => {
       if (!response) return res.status(404).json({ message: "Page Not Found" });
@@ -81,23 +81,26 @@ async function registerUser(req, res) {
 
 
 async function loginUser(req, res) {
-  return USERModel.findOne({ username: req.body.username })
-  .then(response => {
-    if (!response) {
+  return USERModel.findOne({$or: [
+    {username: req.body.username},
+    {email: req.body.username}
+  ]})
+  .then(user_response => {
+    if (!user_response) {
       return res.status(400).json({ message: "Invalid User Or Password" });
     }
 
-    if (!bcrypt.compareSync(req.body.password, response.password)) {
+    if (!bcrypt.compareSync(req.body.password, user_response.password)) {
         return res.status(400).json({ message: "Invalid User Or Password" });
     }
 
-    const token = jwt.sign({ user: response }, process.env.TOKEN_KEY, { expiresIn: 800 });
-    const refresh_token = jwt.sign({ user: response }, process.env.REFRESH_TOKEN_KEY, { expiresIn: 7776000 });
+    const token = jwt.sign({ user: user_response }, process.env.TOKEN_KEY, { expiresIn: 180});
+    const refresh_token = jwt.sign({ user: user_response }, process.env.REFRESH_TOKEN_KEY, { expiresIn: 7776000 });
 
-    return REFRESHTOKENModel.find({ 'access_token.username': req.body.username }).countDocuments()
-    .then(async response => {
-      if (response >= 50) {
-        await REFRESHTOKENModel.deleteMany({ 'access_token.username': req.body.username })
+    return REFRESHTOKENModel.find({ 'access_token.username': user_response.username }).countDocuments()
+    .then(async token_response => {
+      if (token_response >= 50) {
+        await REFRESHTOKENModel.deleteMany({ 'access_token.username': user_response.username })
         .catch(error => {
           return res.status(500).json(error)
         })
@@ -106,7 +109,7 @@ async function loginUser(req, res) {
       const refresh_token_obj = {
         refresh_token: refresh_token,
         access_token: {
-          username: req.body.username,
+          username: user_response.username,
           token: token
         }
       };
@@ -137,36 +140,30 @@ async function loginUser(req, res) {
 
 
 async function refreshToken(req, res) {
-  return USERModel.findOne({ username: req.body.username })
-  .then(user_response => {
-    if (!user_response) {
-      return res.status(400).json({ message: "Invalid User Or Password" });
-    }
-
-    if (!bcrypt.compareSync(req.body.password, user_response.password)) {
-      return res.status(400).json({ message: "Invalid User Or Password" });
-    }
-
-    if (!req.body.refresh_token) {
-      return res.status(404).json({ message: "Bad Request" });
-    }
-
+  try {
     const refresh_token = getCookies(req)['refresh_token'];
 
     return REFRESHTOKENModel.findOne({ refresh_token: refresh_token })
-    .then(response => {
-      if (!response) return res.status(404).json({ message: "Bad Request" });
+    .then(token_response => {
+      if (!token_response) return res.status(404).json({ message: "Bad Request" });
 
-      const token = jwt.sign({ user: user_response }, process.env.TOKEN_KEY, { expiresIn: 800 });
+      return USERModel.findOne({ username: token_response.access_token.username })
+      .then(user_response => {
 
-      const access_token = {
-        username: req.body.username,
-        token: token
-      };
+        const token = jwt.sign({ user: user_response }, process.env.TOKEN_KEY, { expiresIn: 180 });
 
-      return REFRESHTOKENModel.updateOne({ refresh_token: refresh_token }, { access_token: access_token })
-      .then(() => {
-        return res.json({ token: token });
+        const access_token = {
+          username: user_response.username,
+          token: token
+        };
+
+        return REFRESHTOKENModel.updateOne({ refresh_token: refresh_token }, { access_token: access_token })
+        .then(() => {
+          return res.json({ token: token });
+        })
+        .catch(error => {
+          return res.status(500).json(error);
+        })
       })
       .catch(error => {
         return res.status(500).json(error);
@@ -175,28 +172,26 @@ async function refreshToken(req, res) {
     .catch(error => {
       return res.status(500).json(error);
     })
-  })
-  .catch(error => {
+  } catch (error) {
     return res.status(500).json(error);
-  })
+  }
 }
 
 
 async function revokeToken(req, res) {
-  //try {
-    console.log(req);
+  try {
     const refresh_token = getCookies(req)['refresh_token'];
 
     return REFRESHTOKENModel.findOneAndDelete({refresh_token: refresh_token})
     .then(() => {
       return res.json({message: "Refresh token revoked"});
     })
-    /*.catch(error => {
-      return res.status(500).json({message: "Puta DB"});
-    })*/
-  /*} catch (error) {
-    return res.status(500).json({message: "Puto try"});
-  }*/
+    .catch(error => {
+      return res.status(500).json(error);
+    })
+  } catch (error) {
+    return res.status(500).json(error);
+  }
 }
 
 

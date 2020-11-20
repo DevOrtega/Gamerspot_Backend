@@ -34,8 +34,8 @@ function optionalAuthenticateToken(req, res, next) {
       if (!error) req.token = dataStored;
     })
   }
-
-  next()
+  
+  next();
 }
 
 function authenticateUser(req, res, next) {
