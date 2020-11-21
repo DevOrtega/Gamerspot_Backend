@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 router.get('/', controller.getPosts);
 router.get('/:id', controller.getPostById);
-router.post('/', authenticateToken, authenticateUser, controller.createPost);
+router.post('/', authenticateToken, controller.createPost);
 router.patch('/:id', authenticateToken, authenticateUser,  controller.editPost);
 router.delete('/:id', authenticateToken, authenticateUser,  controller.deletePost);
 
@@ -13,22 +13,37 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (token == null) return res.status(401).json({ message: "Unauthorized" });
+  if (token === null) return res.status(401).json({ message: "Unauthorized" });
 
   jwt.verify(token, process.env.TOKEN_KEY, (error, dataStored) => {
     if (error) return res.status(403).json({ message: "Forbidden" })
-    
-    req.user = dataStored;
+
+    req.token = dataStored;
     next();
   })
 }
 
+function optionalAuthenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token !== null) {
+    jwt.verify(token, process.env.TOKEN_KEY, (error, dataStored) => {
+      if (!error) req.token = dataStored;
+    })
+  }
+  
+  next();
+}
+
 function authenticateUser(req, res, next) {
-  if (req.user.user.role === 'admin') {
+  console.log(req.token);
+  if (req.token.user.role === 'admin') {
     next();
   }
 
-  if (req.params.username !== req.user.user.username) {
+  if (req.user.username !== req.token.user.username) {
+    console.log(req.token);
     return res.status(401).json({ message: "Unauthorized" });
   }
     
