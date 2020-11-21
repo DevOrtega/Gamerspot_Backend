@@ -6,6 +6,7 @@ const TEAMModel = require("../teams/teams.model");
 const SPONSORModel = require("../sponsors/sponsors.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { findOne } = require("./users.model");
 
 module.exports = {
   getUsers,
@@ -68,7 +69,7 @@ async function getUserByUsername(req, res) {
       });
   } else {
     return USERModel.findOne({ username: username })
-      .select("_id -email -password")
+      .select("-_id -email -password")
       .populate("sponsor")
       .populate("team")
       .populate("gamer")
@@ -92,8 +93,46 @@ async function registerUser(req, res) {
   req.body.password = bcrypt.hashSync(req.body.password, 10);
 
   return USERModel.create(req.body)
-    .then(() => {
-      return getUsers(req, res);
+    .then((response) => {
+      let userReg = {
+        owner: response._id,
+        name: req.body.name
+      }
+      switch(req.body.role) {
+        case "Gamer":
+          return GAMERModel.create(userReg)
+          .then((gamerResponse) => {
+            return USERModel.findOneAndUpdate(
+              { _id : response._id}, {gamer: gamerResponse._id}, {useFindAndModify:false, runValidators:true}
+              )
+            .then(()=>{
+              return getUsers(req, res);
+            })
+          });
+          
+        case "Team":
+          return TEAMModel.create(userReg)
+          .then((teamResponse) => {
+            return USERModel.findOneAndUpdate(
+              { _id : response._id}, {team: teamResponse._id}, {useFindAndModify:false, runValidators:true}
+              )
+            .then(()=>{
+              return getUsers(req, res);
+            })
+          });
+
+        case "Sponsor":
+          return SPONSORModel.create(userReg)
+          .then((sponsorResponse) => {
+            return USERModel.findOneAndUpdate(
+              { _id : response._id}, {sponsor: sponsorResponse._id}, {useFindAndModify:false, runValidators:true}
+              )
+            .then(()=>{
+              return getUsers(req, res);
+            })
+          });
+       
+      }
     })
     .catch((error) => {
       return res.status(500).json(error);
