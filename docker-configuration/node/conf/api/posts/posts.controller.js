@@ -19,7 +19,7 @@ async function getPosts(req, res) {
   return POSTModel.find()
   .populate({
     path: 'owner',
-    select: 'name',
+    select: 'username name',
     skip: skip,
     limit: PAGE_SIZE
   })
@@ -37,7 +37,7 @@ async function getPostById(req, res) {
   return POSTModel.findById(req.params.id)
   .populate({
     path: 'owner',
-    select: 'name',
+    select: 'username name',
     skip: skip,
     limit: PAGE_SIZE
   })
@@ -53,16 +53,23 @@ async function getPostById(req, res) {
 
 async function createPost(req, res) {
   return POSTModel.create(req.body)
-  .then((response) => {
-    const edited_user = setEditedUserFields(response);
-    return USERModel.findOneAndUpdate({ _id: response.owner }, edited_user, {
+  .then((createResponse) => {
+    
+    return USERModel.findOneAndUpdate({ username: req.token.user.username }, { $push: { postsId: createResponse._id } }, {
       useFindAndModify: false,
       runValidators: true,
     })
       .then((response) => {
-        if (!response)
-          return res.status(404).json({ message: "Page Not Found" });
-        return getGamers(req, res);
+        return POSTModel.findOneAndUpdate({ _id: createResponse._id }, {owner: response._id}, {
+          useFindAndModify: false,
+          runValidators: true,
+        })
+        .then( ()=> {
+          return getPosts(req, res);
+        })
+        .catch((error) => {
+          return res.status(500).json(error);
+        });
       })
       .catch((error) => {
         return res.status(500).json(error);
