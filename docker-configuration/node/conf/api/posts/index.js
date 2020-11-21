@@ -3,10 +3,10 @@ const controller = require('./posts.controller');
 const jwt = require('jsonwebtoken');
 
 router.get('/', controller.getPosts);
-router.get('/:_id', controller.getPostById);
+router.get('/:id', controller.getPostById);
 router.post('/', authenticateToken, authenticateUser, controller.createPost);
-router.delete('/:_id', authenticateToken, authenticateUser,  controller.editPost);
-router.delete('/:_id', authenticateToken, authenticateUser,  controller.deletePost);
+router.patch('/:id', authenticateToken, authenticateUser,  controller.editPost);
+router.delete('/:id', authenticateToken, authenticateUser,  controller.deletePost);
 
 
 function authenticateToken(req, res, next) {

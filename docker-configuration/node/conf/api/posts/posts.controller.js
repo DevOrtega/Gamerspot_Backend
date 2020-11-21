@@ -34,7 +34,7 @@ async function getPosts(req, res) {
 
 
 async function getPostById(req, res) {
-  return POSTModel.findById(req.params._id)
+  return POSTModel.findById(req.params.id)
   .populate({
     path: 'owner',
     select: 'name',
@@ -53,23 +53,33 @@ async function getPostById(req, res) {
 
 async function createPost(req, res) {
   return POSTModel.create(req.body)
-  .then(response => {
-    return USERModel.updateOne({ username: response.owner.username }, { $push: { postsId: response._id }})
-    .then(() => {
-      return res.json(response);
+  .then((response) => {
+    const edited_user = setEditedUserFields(response);
+    return USERModel.findOneAndUpdate({ _id: response.owner }, edited_user, {
+      useFindAndModify: false,
+      runValidators: true,
     })
-    .catch(error => {
-      return res.status(500).json(error);
-    })
+      .then((response) => {
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
+        return getGamers(req, res);
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
   })
-  .catch(error => {
+  .catch((error) => {
     return res.status(500).json(error);
-  })
+  });
 }
 
 
 async function editPost(req, res) {
-  return POSTModel.findOneAndUpdate({username: req.params.username}, req.body, { runValidators: true })
+  const edited_post = setEditedPostFields(req.body);
+  return POSTModel.findOneAndUpdate({_id: req.params.id}, edited_post, {
+    useFindAndModify: false,
+    runValidators: true,
+  })
   .then(response => {
     if (!response) return res.status(404).json({ message: "Page Not Found" });
     return res.json(response);
@@ -81,7 +91,7 @@ async function editPost(req, res) {
 
 
 async function deletePost(req, res) {
-  return POSTModel.findOneAndDelete({_id: req.params._id})
+  return POSTModel.findOneAndDelete({_id: req.params.id})
   .then(async response => {
     return USERModel.updateOne({ username: response.owner.username }, { $pull: { postsId: response._id } })
     .then(() => {
@@ -102,11 +112,20 @@ async function deletePost(req, res) {
  *  Auxiliar functions
  */
 
-function setNewTweet(req_body, owner) {
-  const new_tweet = {};
+function setEditedUserFields(req_body) {
+  const edited_user = {};
+  if (req_body._id !== undefined) {
+    edited_user.postsId = req_body._id;
+  }
+  return edited_user;
+}
 
-  new_tweet.text = req_body.text;
-  new_tweet.owner = owner;
+function setEditedPostFields(req_body) {
+  const edited_post = {};
 
-  return new_tweet;
+  if (req_body.text !== undefined) {
+    edited_post.text = req_body.text;
+  }
+  
+  return edited_post;
 }

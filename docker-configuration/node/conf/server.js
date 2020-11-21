@@ -17,10 +17,16 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-const usersRouter = require('./api/users/index');
+const usersRouter = require('./api/users2/index');
 const postsRouter = require('./api/posts/index');
+const gamersRouter = require('./api/gamers/index');
+const teamsRouter = require('./api/teams/index');
+const sponsorsRouter = require('./api/sponsors/index');
 
 app.use('/users', usersRouter);
+app.use('/gamers', gamersRouter);
+app.use('/teams', teamsRouter);
+app.use('/sponsors', sponsorsRouter);
 app.use('/posts', postsRouter);
 
 app.listen(3000);
