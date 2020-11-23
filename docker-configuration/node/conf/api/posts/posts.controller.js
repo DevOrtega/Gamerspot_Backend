@@ -1,5 +1,5 @@
 const POSTModel= require('./posts.model');
-const USERModel= require('../users/users.model');
+const USERModel= require('../users2/users.model');
 
 module.exports = {getPosts, getPostById, createPost, editPost, deletePost};
 
@@ -19,12 +19,13 @@ async function getPosts(req, res) {
   return POSTModel.find()
   .populate({
     path: 'owner',
-    select: 'username name photoUrl',
+    select: 'username photoUrl',
     skip: skip,
     limit: PAGE_SIZE
   })
   .select('-_id text createdAt owner')
   .then(response => {
+    console.log(response);
     return res.json(response);
   })
   .catch(error => {
@@ -37,7 +38,7 @@ async function getPostById(req, res) {
   return POSTModel.findById(req.params.id)
   .populate({
     path: 'owner',
-    select: 'username name',
+    select: 'username',
     skip: skip,
     limit: PAGE_SIZE
   })
@@ -54,11 +55,12 @@ async function getPostById(req, res) {
 async function createPost(req, res) {
   return POSTModel.create(req.body)
   .then((createResponse) => {
-    return USERModel.findOneAndUpdate({ username: req.token.user.username }, { $push: { postsId: createResponse._id } }, {
+    return USERModel.findOneAndUpdate({ _id: req.token.user._id }, { $push: { postsId: createResponse._id } }, {
       useFindAndModify: false,
       runValidators: true,
     })
       .then((response) => {
+        console.log(response);
         return POSTModel.findOneAndUpdate({ _id: createResponse._id }, {owner: response._id}, {
           useFindAndModify: false,
           runValidators: true,
