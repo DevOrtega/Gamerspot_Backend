@@ -6,7 +6,6 @@ const TEAMModel = require("../teams/teams.model");
 const SPONSORModel = require("../sponsors/sponsors.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { findOne } = require("./users.model");
 
 module.exports = {
   getUsers,
@@ -56,7 +55,10 @@ async function getUserByUsername(req, res) {
 
   if (req.token && req.token.user.username === username) {
     return USERModel.findOne({ username: username })
-      .select(" -password")
+      .select("-password")
+      .populate("gamer")
+      .populate("team")
+      .populate("sponsor")
       .populate("postsId")
       .then((response) => {
         if (!response)
@@ -87,56 +89,86 @@ async function getUserByUsername(req, res) {
 }
 
 async function registerUser(req, res) {
-  if (!req.body.password)
+  if (!req.body.password) {
     return res.status(400).json({ message: "Password Can't Be Empty" });
+  }
 
   req.body.password = bcrypt.hashSync(req.body.password, 10);
 
   return USERModel.create(req.body)
-    .then((response) => {
-      let userReg = {
-        owner: response._id,
-        name: req.body.name
-      }
+    .then(async create_user_response => {
       switch(req.body.role) {
         case "Gamer":
-          return GAMERModel.create(userReg)
-          .then((gamerResponse) => {
+          return GAMERModel.create({
+            name: req.body.name,
+            bornDate: req.body.bornDate,
+            owner: create_user_response._id,
+          })
+          .then(async gamer_response => {
             return USERModel.findOneAndUpdate(
-              { _id : response._id}, {gamer: gamerResponse._id}, {useFindAndModify:false, runValidators:true}
-              )
-            .then(()=>{
-              return getUsers(req, res);
+              { _id : create_user_response._id },
+              { gamer: gamer_response._id },
+              { useFindAndModify: false, runValidators: true }
+            )
+            .then(() => {
+              return res.json(create_user_response);
             })
-          });
+            .catch(error => {
+              return res.status(500).json(error);
+            })
+          })
+          .catch(error => {
+            return res.status(500).json(error);
+          })
           
         case "Team":
-          return TEAMModel.create(userReg)
-          .then((teamResponse) => {
+          return TEAMModel.create({
+            name: req.body.name,
+            owner: create_user_response._id
+          })
+          .then(async team_response => {
             return USERModel.findOneAndUpdate(
-              { _id : response._id}, {team: teamResponse._id}, {useFindAndModify:false, runValidators:true}
-              )
-            .then(()=>{
-              return getUsers(req, res);
+              { _id : create_user_response._id },
+              { team: team_response._id },
+              { useFindAndModify: false, runValidators: true }
+            )
+            .then(() => {
+              return res.json(create_user_response);
             })
-          });
+            .catch(error => {
+              return res.status(500).json(error);
+            })
+          })
+          .catch(error => {
+            return res.status(500).json(error);
+          })
 
         case "Sponsor":
-          return SPONSORModel.create(userReg)
-          .then((sponsorResponse) => {
+          return SPONSORModel.create({
+            name: req.body.name,
+            owner: create_user_response._id
+          })
+          .then(async sponsor_response => {
             return USERModel.findOneAndUpdate(
-              { _id : response._id}, {sponsor: sponsorResponse._id}, {useFindAndModify:false, runValidators:true}
-              )
-            .then(()=>{
-              return getUsers(req, res);
+              { _id : create_user_response._id },
+              { sponsor: sponsor_response._id },
+              { useFindAndModify: false, runValidators: true }
+            )
+            .then(() => {
+              return res.json(create_user_response);
             })
-          });
-       
+            .catch(error => {
+              return res.status(500).json(error);
+            })
+          })
+          .catch(error => {
+            return res.status(500).json(error);
+          })
       }
     })
     .catch((error) => {
       return res.status(500).json(error);
-    });
+    })
 }
 
 async function loginUser(req, res) {
@@ -277,13 +309,52 @@ async function editUser(req, res) {
     edited_user,
     { useFindAndModify: false, runValidators: true }
   )
-    .then((response) => {
-      if (!response) return res.status(404).json({ message: "Page Not Found" });
-      return getUserByUsername(req, res);
-    })
-    .catch((error) => {
-      return res.status(400).json(error);
-    });
+  .then((response) => {
+    if (!response) return res.status(404).json({ message: "Page Not Found" });
+    switch(req.body.role) {
+      case "Gamer":
+        return GAMERModel.findOneAndUpdate(
+          { username: req.params.username },
+          edited_user,
+          { useFindAndModify: false, runValidators: true }
+        )
+        .then(user => {
+          return res.json(user);
+        })
+        .catch(error => {
+          return res.status(500).json(error);
+        })
+        
+      case "Team":
+        return TEAMModel.findOneAndUpdate(
+          { username: req.params.username },
+          edited_user,
+          { useFindAndModify: false, runValidators: true }
+        )
+        .then(user => {
+          return res.json(user);
+        })
+        .catch(error => {
+          return res.status(500).json(error);
+        })
+
+      case "Sponsor":
+        return SPONSORModel.findOneAndUpdate(
+          { username: req.params.username },
+          edited_user,
+          { useFindAndModify: false, runValidators: true }
+        )
+        .then(user => {
+          return res.json(user);
+        })
+        .catch(error => {
+          return res.status(500).json(error);
+        })
+    }
+  })
+  .catch((error) => {
+    return res.status(400).json(error);
+  });
 }
 
 async function deleteUser(req, res) {
@@ -352,16 +423,20 @@ function setEditedUserFields(req_body) {
     edited_user.photoUrl = req_body.photoUrl;
   }
 
-  if (req_body.gameList !== undefined) {
-    edited_user.gameList = req_body.gameList;
+  if (req_body.games !== undefined) {
+    edited_user.games = req_body.games;
   }
 
-  if (req_body.linkList !== undefined) {
-    edited_user.linkList = req_body.linkList;
+  if (req_body.links !== undefined) {
+    edited_user.links = req_body.links;
   }
 
   if (req_body.biography !== undefined) {
     edited_user.biography = req_body.biography;
+  }
+
+  if (req_body.bornDate !== undefined) {
+    edited_user.bornDate = new Date(req_body.bornDate);
   }
 
   return edited_user;

@@ -4,8 +4,6 @@ const USERSchemaOptions = {
 	versionKey: false
 }
 
-const GAMELISTSchema = mongoose.Schema({ gameName: String, gameUser: String });
-const LINKLISTSchema = mongoose.Schema({ link: String });
 const USERschema = mongoose.Schema({
     username: {
         type: String,
@@ -13,13 +11,13 @@ const USERschema = mongoose.Schema({
         unique: [true, "Username Already Exists"],
         immutable: true
     },
+    password: {
+        type: String,
+    },
     email: {
         type: String,
         required: [true, "User Email Can't Be Empty"],
         unique: [true, "User Email Already Exists"]
-    },
-    password: {
-        type: String,
     },
     gamer: {
         type: mongoose.Schema.Types.ObjectId,
@@ -41,11 +39,15 @@ const USERschema = mongoose.Schema({
         type: String,
         default: ""
     },
-    gameList: {
-        type: [GAMELISTSchema],
+    games: {
+        type: [
+            { gameName: String, gameUser: String }
+        ],
     },
-    linkList: {
-        type: [LINKLISTSchema],
+    links: {
+        type: [
+            { link: String }
+        ],
     },
     biography: {
         type: String,
@@ -56,7 +58,7 @@ const USERschema = mongoose.Schema({
         default: Date.now,
         immutable: true
     },
-    postsId: [
+    posts: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'post'
