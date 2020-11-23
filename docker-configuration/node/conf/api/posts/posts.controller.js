@@ -19,7 +19,7 @@ async function getPosts(req, res) {
   return POSTModel.find()
   .populate({
     path: 'owner',
-    select: 'username name',
+    select: 'username name photoUrl',
     skip: skip,
     limit: PAGE_SIZE
   })
@@ -54,7 +54,6 @@ async function getPostById(req, res) {
 async function createPost(req, res) {
   return POSTModel.create(req.body)
   .then((createResponse) => {
-    
     return USERModel.findOneAndUpdate({ username: req.token.user.username }, { $push: { postsId: createResponse._id } }, {
       useFindAndModify: false,
       runValidators: true,
