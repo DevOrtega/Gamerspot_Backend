@@ -19,13 +19,15 @@ async function getPosts(req, res) {
   return POSTModel.find()
   .populate({
     path: 'owner',
+    populate: {
+      path: 'gamer team sponsor'
+    },
     select: 'username photoUrl',
     skip: skip,
     limit: PAGE_SIZE
   })
   .select('-_id text createdAt owner')
   .then(response => {
-    console.log(response);
     return res.json(response);
   })
   .catch(error => {
@@ -60,7 +62,6 @@ async function createPost(req, res) {
       runValidators: true,
     })
       .then((response) => {
-        console.log(response);
         return POSTModel.findOneAndUpdate({ _id: createResponse._id }, {owner: response._id}, {
           useFindAndModify: false,
           runValidators: true,

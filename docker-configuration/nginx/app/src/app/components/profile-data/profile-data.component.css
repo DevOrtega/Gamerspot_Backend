@@ -1,1 +1,29 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(50px, 1fr));
+    row-gap: 15px;
+    justify-items: center;
+    text-align: center;
+ }
 
+ .biography {
+     padding-top: 15px;
+     padding-bottom: 15px;
+ }
+
+.nav-pills > a {
+    box-shadow: none !important;
+    height: 30%;
+}
+
+.nav-pills > a.icon {
+    padding-bottom: 0;
+}
+
+.nav-pills > a > i {
+    font-size: 30px;
+}
+
+hr.solid {
+    border-top: 3px solid #bbb;
+}
