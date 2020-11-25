@@ -33,10 +33,22 @@ async function getUsers(req, res) {
 
   return USERModel.find()
     .select("-_id -password -email")
-    .populate("gamer")
-    .populate("team")
-    .populate("sponsor")
-    .populate("postsId")
+    .populate({
+      path: 'gamer',
+      select: '-_id'
+    })
+    .populate({
+      path: 'team',
+      select: '-_id'
+    })
+    .populate({
+      path: 'sponsor',
+      select: '-_id'
+    })
+    .populate({
+      path: 'posts',
+      select: '-_id'
+    })
     .skip(skip)
     .limit(PAGE_SIZE)
     .then((response) => {
@@ -59,7 +71,7 @@ async function getUserByUsername(req, res) {
       .populate("gamer")
       .populate("team")
       .populate("sponsor")
-      .populate("postsId")
+      .populate("posts")
       .then((response) => {
         if (!response)
           return res.status(404).json({ message: "Page Not Found" });
@@ -75,7 +87,7 @@ async function getUserByUsername(req, res) {
       .populate("sponsor")
       .populate("team")
       .populate("gamer")
-      .populate("postsId")
+      .populate("posts")
       .then((response) => {
         if (!response)
           return res.status(404).json({ message: "Page Not Found" });
@@ -175,6 +187,10 @@ async function loginUser(req, res) {
   return USERModel.findOne({
     $or: [{ username: req.body.username }, { email: req.body.username }],
   })
+    .populate('gamer')
+    .populate('team')
+    .populate('sponsor')
+    .populate('posts')
     .then((user_response) => {
       if (!user_response) {
         return res.status(400).json({ message: "Invalid User Or Password" });
@@ -243,43 +259,58 @@ async function refreshToken(req, res) {
     const refresh_token = getCookies(req)["refresh_token"];
 
     return REFRESHTOKENModel.findOne({ refresh_token: refresh_token })
-      .then((token_response) => {
-        if (!token_response)
-          return res.status(404).json({ message: "Bad Request" });
+    .then((token_response) => {
+      if (!token_response) return res.status(404).json({ message: "Bad Request" });
 
-        return USERModel.findOne({
-          username: token_response.access_token.username,
+      return USERModel.findOne({
+        username: token_response.access_token.username,
+      })
+      .populate({
+        path: 'gamer',
+        select: '-_id'
+      })
+      .populate({
+        path: 'team',
+        select: '-_id'
+      })
+      .populate({
+        path: 'sponsor',
+        select: '-_id'
+      })
+      .populate({
+        path: 'posts',
+        select: '-_id'
+      })
+      .then((user_response) => {
+        const token = jwt.sign(
+          { user: user_response },
+          process.env.TOKEN_KEY,
+          { expiresIn: 180 }
+        );
+
+        const access_token = {
+          username: user_response.username,
+          token: token,
+        };
+
+        return REFRESHTOKENModel.updateOne(
+          { refresh_token: refresh_token },
+          { access_token: access_token }
+        )
+        .then(() => {
+          return res.json({ token: token });
         })
-          .then((user_response) => {
-            const token = jwt.sign(
-              { user: user_response },
-              process.env.TOKEN_KEY,
-              { expiresIn: 180 }
-            );
-
-            const access_token = {
-              username: user_response.username,
-              token: token,
-            };
-
-            return REFRESHTOKENModel.updateOne(
-              { refresh_token: refresh_token },
-              { access_token: access_token }
-            )
-              .then(() => {
-                return res.json({ token: token });
-              })
-              .catch((error) => {
-                return res.status(500).json(error);
-              });
-          })
-          .catch((error) => {
-            return res.status(500).json(error);
-          });
+        .catch((error) => {
+          return res.status(500).json(error);
+        });
       })
       .catch((error) => {
         return res.status(500).json(error);
       });
+    })
+    .catch((error) => {
+      return res.status(500).json(error);
+    });
   } catch (error) {
     return res.status(500).json(error);
   }
@@ -309,17 +340,17 @@ async function editUser(req, res) {
     edited_user,
     { useFindAndModify: false, runValidators: true }
   )
-  .then((response) => {
-    if (!response) return res.status(404).json({ message: "Page Not Found" });
+  .then((user_response) => {
+    if (!user_response) return res.status(404).json({ message: "Page Not Found" });
     switch(req.body.role) {
       case "Gamer":
         return GAMERModel.findOneAndUpdate(
-          { username: req.params.username },
+          { owner: user_response._id },
           edited_user,
           { useFindAndModify: false, runValidators: true }
         )
-        .then(user => {
-          return res.json(user);
+        .then(role_response => {
+          return res.json(role_response);
         })
         .catch(error => {
           return res.status(500).json(error);
@@ -327,12 +358,12 @@ async function editUser(req, res) {
         
       case "Team":
         return TEAMModel.findOneAndUpdate(
-          { username: req.params.username },
+          { owner: user_response._id },
           edited_user,
           { useFindAndModify: false, runValidators: true }
         )
-        .then(user => {
-          return res.json(user);
+        .then(role_response => {
+          return res.json(role_response);
         })
         .catch(error => {
           return res.status(500).json(error);
@@ -340,12 +371,12 @@ async function editUser(req, res) {
 
       case "Sponsor":
         return SPONSORModel.findOneAndUpdate(
-          { username: req.params.username },
+          { owner: user_response._id },
           edited_user,
           { useFindAndModify: false, runValidators: true }
         )
-        .then(user => {
-          return res.json(user);
+        .then(role_response => {
+          return res.json(role_response);
         })
         .catch(error => {
           return res.status(500).json(error);
@@ -363,7 +394,7 @@ async function deleteUser(req, res) {
     .then((response) => {
       if (!response) return res.status(404).json({ message: "Page Not Found" });
 
-      response[0].postsId.forEach(async (id) => {
+      response[0].posts.forEach(async (id) => {
         return POSTModel.deleteOne({ _id: id }).catch((error) => {
           return res.status(500).json(error);
         });
@@ -407,14 +438,18 @@ async function deleteUser(req, res) {
 function setEditedUserFields(req_body) {
   const edited_user = {};
 
-  if (req_body.email !== undefined) {
-    edited_user.email = req_body.email;
+  if (req_body.name !== undefined) {
+    edited_user.name = req_body.name;
   }
 
   if (req_body.password !== undefined) {
     edited_user.password = bcrypt.hashSync(req_body.password, 10);
   }
 
+  if (req_body.email !== undefined) {
+    edited_user.email = req_body.email;
+  }
+  
   if (req_body.country !== undefined) {
     edited_user.country = req_body.country;
   }
@@ -436,7 +471,7 @@ function setEditedUserFields(req_body) {
   }
 
   if (req_body.bornDate !== undefined) {
-    edited_user.bornDate = new Date(req_body.bornDate);
+    edited_user.bornDate = req_body.bornDate;
   }
 
   return edited_user;

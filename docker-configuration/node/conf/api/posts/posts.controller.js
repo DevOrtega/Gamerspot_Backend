@@ -57,7 +57,7 @@ async function getPostById(req, res) {
 async function createPost(req, res) {
   return POSTModel.create(req.body)
   .then((createResponse) => {
-    return USERModel.findOneAndUpdate({ _id: req.token.user._id }, { $push: { postsId: createResponse._id } }, {
+    return USERModel.findOneAndUpdate({ _id: req.token.user._id }, { $push: { posts: createResponse._id } }, {
       useFindAndModify: false,
       runValidators: true,
     })
@@ -102,7 +102,7 @@ async function editPost(req, res) {
 async function deletePost(req, res) {
   return POSTModel.findOneAndDelete({_id: req.params.id})
   .then(async response => {
-    return USERModel.updateOne({ username: response.owner.username }, { $pull: { postsId: response._id } })
+    return USERModel.updateOne({ username: response.owner.username }, { $pull: { posts: response._id } })
     .then(() => {
       return res.json(response);
     })
@@ -124,7 +124,7 @@ async function deletePost(req, res) {
 function setEditedUserFields(req_body) {
   const edited_user = {};
   if (req_body._id !== undefined) {
-    edited_user.postsId = req_body._id;
+    edited_user.posts = req_body._id;
   }
   return edited_user;
 }

@@ -58,7 +58,7 @@ const USERschema = mongoose.Schema({
         default: Date.now,
         immutable: true
     },
-    postsId: [
+    posts: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'post'

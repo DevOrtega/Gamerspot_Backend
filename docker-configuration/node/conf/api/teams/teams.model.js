@@ -6,7 +6,8 @@ const TEAMSchemaOptions = {
 
 const TEAMschema = mongoose.Schema({
     name: {
-        type: String
+        type: String,
+        required: [true, "User Public Name Can't Be Empty"]
     },
     createdAt: {
         type: Date,
