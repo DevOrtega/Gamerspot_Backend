@@ -73,8 +73,7 @@ async function getUserByUsername(req, res) {
       .populate("sponsor")
       .populate("posts")
       .then((response) => {
-        if (!response)
-          return res.status(404).json({ message: "Page Not Found" });
+        if (!response) return res.status(404).json({ message: "Page Not Found" });
 
         return res.json(response);
       })

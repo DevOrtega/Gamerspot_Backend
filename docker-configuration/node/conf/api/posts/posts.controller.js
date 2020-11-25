@@ -1,5 +1,6 @@
 const POSTModel= require('./posts.model');
 const USERModel= require('../users2/users.model');
+const USER = require('../users2/users.model');
 
 module.exports = {getPosts, getPostById, createPost, editPost, deletePost};
 
@@ -16,23 +17,56 @@ async function getPosts(req, res) {
   const PAGE_SIZE = 10;
   const skip = (page - 1) * PAGE_SIZE;
 
-  return POSTModel.find()
-  .populate({
-    path: 'owner',
-    populate: {
-      path: 'gamer team sponsor'
-    },
-    select: 'username photoUrl',
-    skip: skip,
-    limit: PAGE_SIZE
-  })
-  .select('-_id text createdAt owner')
-  .then(response => {
-    return res.json(response);
-  })
-  .catch(error => {
-    return res.status(500).json(error);
-  })
+  if (req.query.username) {
+    return USER.findOne({ username: req.query.username})
+    .select('_id')
+    .then(response => {
+      if (!response) return res.status(404).json({ message: "Page Not Found" });
+
+      return POSTModel.find({ owner: response._id })
+      .populate({
+        path: 'owner',
+        populate: {
+          path: 'gamer team sponsor'
+        },
+        select: 'username photoUrl',
+        skip: skip,
+        limit: PAGE_SIZE
+      })
+      .select('-_id text createdAt owner')
+      .then(response => {
+        if (!response) return res.status(404).json({ message: "Page Not Found" });
+
+        return res.json(response);
+      })
+      .catch(error => {
+        return res.status(500).json(error);
+      })
+    })
+    .catch(error => {
+      return res.status(500).json(error);
+    })
+  } else {
+    return POSTModel.find()
+    .populate({
+      path: 'owner',
+      populate: {
+        path: 'gamer team sponsor'
+      },
+      select: 'username photoUrl',
+      skip: skip,
+      limit: PAGE_SIZE
+    })
+    .select('-_id text createdAt owner')
+    .then(response => {
+      if (!response) return res.status(404).json({ message: "Page Not Found" });
+
+      return res.json(response);
+    })
+    .catch(error => {
+      return res.status(500).json(error);
+    })
+  }
 }
 
 
