@@ -3,7 +3,6 @@ const USERModel= require('../users2/users.model');
 
 module.exports = {getPosts, getPostById, createPost, editPost, deletePost};
 
-
 async function getPosts(req, res) {
   let page = 1;
 
@@ -22,11 +21,11 @@ async function getPosts(req, res) {
     populate: {
       path: 'gamer team sponsor'
     },
-    select: 'username photoUrl',
+    select: 'username photoUrl country',
     skip: skip,
     limit: PAGE_SIZE
   })
-  .select('-_id text createdAt owner')
+  .select('_id text createdAt owner')
   .then(response => {
     return res.json(response);
   })
@@ -44,7 +43,7 @@ async function getPostById(req, res) {
     skip: skip,
     limit: PAGE_SIZE
   })
-  .select('-_id text createdAt owner')
+  .select('_id text createdAt owner')
   .then(response => {
     return res.json(response);
   })

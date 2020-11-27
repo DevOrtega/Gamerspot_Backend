@@ -2,6 +2,8 @@ const router = require('express').Router({mergeParams: true});
 const controller = require('./posts.controller');
 const jwt = require('jsonwebtoken');
 
+const POSTModel= require('./posts.model');
+
 router.get('/', controller.getPosts);
 router.get('/:id', controller.getPostById);
 router.post('/', authenticateToken, controller.createPost);
@@ -37,17 +39,19 @@ function optionalAuthenticateToken(req, res, next) {
 }
 
 function authenticateUser(req, res, next) {
-  console.log(req.token);
   if (req.token.user.role === 'admin') {
     next();
   }
 
-  if (req.user.username !== req.token.user.username) {
-    console.log(req.token);
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-    
-  next();
+  return POSTModel.findById(req.params.id)
+  .then(response => {
+
+    if (response.owner.toString() !== req.token.user._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    next();
+  })
 }
 
 module.exports = router;
