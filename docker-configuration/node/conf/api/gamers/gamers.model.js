@@ -8,7 +8,7 @@ const GAMERschema = mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "User Public Name Can't Be Empty"],
+      required: [true, "User Public Name Can't Be Empty"]
     },
     bornDate: {
       type: Date,
