@@ -52,7 +52,7 @@ async function getPosts(req, res) {
       populate: {
         path: 'gamer team sponsor'
       },
-      select: 'username photoUrl',
+      select: 'username photoUrl country',
       skip: skip,
       limit: PAGE_SIZE
     })
