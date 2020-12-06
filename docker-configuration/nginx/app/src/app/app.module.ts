@@ -1,6 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
-import { CookieService } from "ngx-cookie-service";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -10,8 +9,6 @@ import { RegisterComponent } from './pages/register/register.component';
 import { HomeComponent } from './pages/home/home.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ProfileComponent } from './pages/profile/profile.component';
-import { ProfileDataComponent } from './components/profile-data/profile-data.component';
-import { ProfileFormComponent } from './components/profile-form/profile-form.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { DatePipe } from '@angular/common';
 import { ProfileStatisticsApexComponent } from './components/profile-statistics-apex/profile-statistics-apex.component';
@@ -23,13 +20,16 @@ import { appInitializer } from './initializers/app.initializer';
 import { AuthService } from './services/auth/auth.service';
 import { ProfileStatisticsComponent } from './components/profile-statistics/profile-statistics.component';
 import { ProfileRankingComponent } from './components/profile-ranking/profile-ranking.component';
-import { LolStatisticsComponent } from './components/lol-statistics/lol-statistics.component';
+import { ProfileStatisticsLolComponent } from './components/profile-statistics-lol/profile-statistics-lol.component';
 import { ProfileStatisticsNodataComponent } from './components/profile-statistics-nodata/profile-statistics-nodata.component';
 import { ProfileStatisticsMainComponent } from './components/profile-statistics-main/profile-statistics-main.component';
 import { ProfilePostsComponent } from './components/profile-posts/profile-posts.component';
 import { ProfileEditorComponent } from './components/profile-editor/profile-editor.component';
 import { FeedsPostComponent } from './components/feed-post/feed-post.component';
 import { FeedsGetComponent } from './components/feed-get/feed-get.component';
+import { PrettyJsonPipe } from './pretty-json.pipe';
+import { ProfileStatisticsTftComponent } from './components/profile-statistics-tft/profile-statistics-tft.component';
+import { AddPlayersComponent } from './components/add-players/add-players.component';
 
 
 @NgModule({
@@ -39,8 +39,6 @@ import { FeedsGetComponent } from './components/feed-get/feed-get.component';
     RegisterComponent,
     HomeComponent,
     ProfileComponent,
-    ProfileDataComponent,
-    ProfileFormComponent,
     ResetPasswordComponent,
     NavbarComponent,
     ProfileStatisticsComponent,
@@ -49,10 +47,13 @@ import { FeedsGetComponent } from './components/feed-get/feed-get.component';
     ProfileStatisticsNodataComponent,
     ProfileStatisticsMainComponent,
     ProfilePostsComponent,
-    LolStatisticsComponent,
+    ProfileStatisticsLolComponent,
     ProfileEditorComponent,
     FeedsPostComponent,
-    FeedsGetComponent
+    FeedsGetComponent,
+    PrettyJsonPipe,
+    ProfileStatisticsTftComponent,
+    AddPlayersComponent
   ],
   imports: [
     BrowserModule,
@@ -62,7 +63,6 @@ import { FeedsGetComponent } from './components/feed-get/feed-get.component';
     HttpClientModule
   ],
   providers: [
-    CookieService,
     DatePipe,
     { provide: APP_INITIALIZER, useFactory: appInitializer, multi: true, deps: [AuthService] },
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

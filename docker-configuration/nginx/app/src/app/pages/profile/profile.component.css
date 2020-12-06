@@ -1,29 +1,114 @@
-.profile-main {
-  min-height: 480px;
-  margin-top: 4%;
+img {
+  width: 100px;
+  height: 100px;
+  margin-right: 20px;
+  margin-left: 20px;
 }
 
 img.profile-photo {
+  margin: 20px;
   width: 250px;
   height: 250px;
-}
-
-div.container {
-  min-height: 480px;
-  padding: 25px 25px;
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 50%;
 }
 
 div.fixed-col {
   margin-left: auto;
-  margin-right: auto;
-  min-width: 300px;
+  min-width: 200px;
 }
 
 div.fixed-col.left {
   text-align: center;
 }
 
+.profile-main {
+  min-height: 380px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 2fr 5fr;
+  padding: 20px;
+  border-radius: 30px;
+}
+
+.overall-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 226px 1fr;
+  padding-left: 20px;
+  row-gap: 20px;
+}
+
+.grid-container {
+  display: grid;
+  row-gap: 15px;
+  justify-items: center;
+  text-align: center;
+  border-radius: 20px;
+  padding: 10px 0 15px 0;
+}
+
+.default-container {
+  min-height: 177px;
+  position: relative;
+  text-align: center;
+  border-radius: 20px;
+  padding: 10px 0 15px 0;
+}
+
+.default-container > i {
+  position: absolute;
+}
+
+.default-container > i.me {
+  top: 50%;
+  right: 30%;
+}
+
+.default-container > i.not-me {
+  top: 50%;
+  right: 24%;
+}
+
+.games-container {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  row-gap: 20px;
+}
+
+.contact-links-container {
+  justify-self: center;
+}
+
+.contact-links {
+  width: 150px;
+  text-align: center;
+  border-radius: 20px;
+  padding: 10px;
+}
+
+.side-data {
+  text-align: center;
+  justify-content: center;
+}
+
+.links {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+}
+
+.biography {
+  width: 450px;
+}
+
+.empty-field {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .nav-tabs > a {
+  margin-top: 30px;
   box-shadow: none !important;
   font-size: 2vh;
 }
@@ -37,25 +122,49 @@ div.fixed-col.left {
 }
 
 .nav-tabs > a.btn.btn-conf:hover {
-  background-color: blueviolet;
+  background-color: #851DE0;
 }
 
 .nav-tabs > a.btn.btn-conf.active {
-  background-color: blueviolet;
+  background-color:#851DE0;
 }
 
 .nav-tabs > a > i {
   font-size: 30px;
 }
 
-.gamer {
-  
+.gamer-outer-border {
+  border: 3px solid var(--gamer);
 }
 
-.team {
-  
+.team-outer-border {
+  border: 3px solid var(--team);
 }
 
-.sponsor {
+.sponsor-outer-border {
+  border: 3px solid var(--sponsor);
+}
 
+.gamer-inner-borders {
+  border: 2px solid var(--gamer);
+}
+
+.team-inner-borders {
+  border: 2px solid var(--team);
+}
+
+.sponsor-inner-borders {
+  border: 2px solid var(--sponsor);
+}
+
+.gamer-title-color {
+  color: var(--gamer);
+}
+
+.team-title-color {
+  color: var(--team);
+}
+
+.sponsor-title-color {
+  color: var(--sponsor);
 }
