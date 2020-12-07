@@ -88,7 +88,7 @@ async function getPostById(req, res) {
 
 
 async function createPost(req, res) {
-  const tags = req.body.tags;
+  let tags = req.body.tags;
   
   delete req.body.tags;
 
@@ -104,19 +104,46 @@ async function createPost(req, res) {
         runValidators: true,
       })
       .then(async () => {
-        
         if (tags && tags.length > 0) {
-          /*
           try {
-            const countTags = await TAGModel.find({}).countDocuments();
+            if (tags.length > 100) {
+              tags.splice(100);
+            }
+
+            const storedTags = await TAGModel.find({});
+
+            let tagsToCreate = [];
+
+            const storedTagsNames = storedTags.map(tag => tag.name);
+
+            tags.forEach((tag) => {
+              if (!storedTagsNames.includes(tag.name)) {
+                tagsToCreate.push(tag);
+              }
+            })
+
+            if (storedTags.length >= 100) {
+              const oldestTags = await TAGModel.find({}).sort({createdAt: 1});
+
+              let tagsToDelete = [];
+
+              oldestTags.forEach(oldestTag => {
+                if (!tags.some(tag => tag.name === oldestTag.name)) {
+                  tagsToDelete.push(oldestTag);
+                }
+              })
+
+              tagsToDelete.forEach(async tagToDelete => {
+                await TAGModel.findOneAndDelete({ _id: tagToDelete._id });
+                await POSTModel.updateMany({ }, { $pull: { tags: tagToDelete._id } }, {
+                  useFindAndModify: false,
+                  runValidators: true
+                })
+              })
+            }
           } catch(error) {
             return res.status(500).json(error);
           }
-          
-          if (countTags > 2) {
-            await TAGModel.find({}).sort('createdAt')
-          }
-          */
 
           await tags.forEach(async tag => {
             return TAGModel.findOneAndUpdate({ name: tag.name }, { $push: { posts: createResponse._id } }, {
@@ -126,7 +153,7 @@ async function createPost(req, res) {
               useFindAndModify: false,
               runValidators: true
             })
-            .then(updateTagResponse => {
+            .then(async updateTagResponse => {
               return POSTModel.findOneAndUpdate({ _id: createResponse._id }, { $push: { tags: updateTagResponse._id } }, {
                 useFindAndModify: false,
                 runValidators: true,
