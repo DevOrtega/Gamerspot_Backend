@@ -1,6 +1,6 @@
 const POSTModel= require('./posts.model');
 const USERModel= require('../users/users.model');
-const USER = require('../users/users.model');
+const TAGModel= require('../tags/tags.model');
 
 module.exports = {getPosts, getPostById, createPost, editPost, deletePost};
 
@@ -17,7 +17,7 @@ async function getPosts(req, res) {
   const skip = (page - 1) * PAGE_SIZE;
 
   if (req.query.username) {
-    return USER.findOne({ username: req.query.username})
+    return USERModel.findOne({ username: req.query.username})
     .select('_id')
     .then(response => {
       if (!response) return res.status(404).json({ message: "Page Not Found" });
@@ -88,27 +88,66 @@ async function getPostById(req, res) {
 
 
 async function createPost(req, res) {
+  const tags = req.body.tags;
+  
+  delete req.body.tags;
+
   return POSTModel.create(req.body)
-  .then((createResponse) => {
+  .then(async createResponse => {
     return USERModel.findOneAndUpdate({ _id: req.token.user._id }, { $push: { posts: createResponse._id } }, {
       useFindAndModify: false,
       runValidators: true,
     })
-      .then((response) => {
-        return POSTModel.findOneAndUpdate({ _id: createResponse._id }, {owner: response._id}, {
-          useFindAndModify: false,
-          runValidators: true,
-        })
-        .then( ()=> {
-          return getPosts(req, res);
-        })
-        .catch((error) => {
-          return res.status(500).json(error);
-        });
+    .then(async updateUserResponse => {
+      return POSTModel.findOneAndUpdate({ _id: createResponse._id }, { owner: updateUserResponse._id }, {
+        useFindAndModify: false,
+        runValidators: true,
+      })
+      .then(async () => {
+        /*
+        if (tags && tags.length > 0) {
+          try {
+            const countTags = await TAGModel.find({}).countDocuments();
+          } catch(error) {
+            return res.status(500).json(error);
+          }
+          
+          if (countTags > 2) {
+            await TAGModel.find({}).sort('createdAt')
+          }*/
+
+          await tags.forEach(async tag => {
+            return TAGModel.findOneAndUpdate({ name: tag.name }, { $push: { posts: createResponse._id } }, {
+              upsert: true,
+              new: true,
+              setDefaultsOnInsert: true,
+              useFindAndModify: false,
+              runValidators: true
+            })
+            .then(updateTagResponse => {
+              return POSTModel.findOneAndUpdate({ _id: createResponse._id }, { $push: { tags: updateTagResponse._id } }, {
+                useFindAndModify: false,
+                runValidators: true,
+              })
+              .catch((error) => {
+                return res.status(500).json(error);
+              })
+            })
+            .catch((error) => {
+              return res.status(500).json(error);
+            })
+          })
+        }
+        
+        return getPosts(req, res);
       })
       .catch((error) => {
         return res.status(500).json(error);
-      });
+      })
+    })
+    .catch((error) => {
+      return res.status(500).json(error);
+    });
   })
   .catch((error) => {
     return res.status(500).json(error);
@@ -120,7 +159,7 @@ async function editPost(req, res) {
   const edited_post = setEditedPostFields(req.body);
   return POSTModel.findOneAndUpdate({_id: req.params.id}, edited_post, {
     useFindAndModify: false,
-    runValidators: true,
+    runValidators: true
   })
   .then(response => {
     if (!response) return res.status(404).json({ message: "Page Not Found" });
@@ -136,7 +175,27 @@ async function deletePost(req, res) {
   return POSTModel.findOneAndDelete({_id: req.params.id})
   .then(async response => {
     return USERModel.updateOne({ username: response.owner.username }, { $pull: { posts: response._id } })
-    .then(() => {
+    .then(async () => {
+      await response.tags.forEach(async tag => {
+        return TAGModel.findOneAndUpdate({ _id: tag}, { $pull: { posts: response._id } }, {
+          new: true,
+          useFindAndModify: false,
+          runValidators: true
+        })
+        .then(async updateTagResponse => {
+          if (updateTagResponse.posts.length === 0) {
+            return TAGModel.findOneAndDelete({ _id: updateTagResponse._id })
+            .catch(error => {
+              return res.status(500).json(error);
+            })
+          }
+          console.log(updateTagResponse);
+        })
+        .catch(error => {
+          return res.status(500).json(error);
+        })
+      })
+
       return res.json(response);
     })
     .catch(error => {

@@ -16,8 +16,14 @@ const POSTschema = mongoose.Schema({
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user2'
-    }
+        ref: 'user'
+    },
+    tags: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'tag'
+        }
+    ]
 }, POSTschemaOptions);
 
 const POST = mongoose.model('post', POSTschema);

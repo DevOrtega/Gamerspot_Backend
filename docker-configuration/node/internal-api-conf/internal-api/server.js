@@ -22,11 +22,13 @@ const postsRouter = require('./api/posts/index');
 const gamersRouter = require('./api/gamers/index');
 const teamsRouter = require('./api/teams/index');
 const sponsorsRouter = require('./api/sponsors/index');
+const tagsRouter = require('./api/tags/index');
 
 app.use('/users', usersRouter);
 app.use('/gamers', gamersRouter);
 app.use('/teams', teamsRouter);
 app.use('/sponsors', sponsorsRouter);
 app.use('/posts', postsRouter);
+app.use('/tags', tagsRouter);
 
 app.listen(3000);

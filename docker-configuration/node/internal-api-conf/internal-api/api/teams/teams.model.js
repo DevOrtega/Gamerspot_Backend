@@ -16,7 +16,7 @@ const TEAMschema = mongoose.Schema({
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user2'
+        ref: 'user'
     },
     players: [
         {
