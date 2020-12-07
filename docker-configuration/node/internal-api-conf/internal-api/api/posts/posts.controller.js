@@ -104,8 +104,9 @@ async function createPost(req, res) {
         runValidators: true,
       })
       .then(async () => {
-        /*
+        
         if (tags && tags.length > 0) {
+          /*
           try {
             const countTags = await TAGModel.find({}).countDocuments();
           } catch(error) {
@@ -114,7 +115,8 @@ async function createPost(req, res) {
           
           if (countTags > 2) {
             await TAGModel.find({}).sort('createdAt')
-          }*/
+          }
+          */
 
           await tags.forEach(async tag => {
             return TAGModel.findOneAndUpdate({ name: tag.name }, { $push: { posts: createResponse._id } }, {
