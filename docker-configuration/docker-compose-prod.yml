@@ -1,15 +1,22 @@
 services:
     nginx:
         depends_on:
-            - node
-        image: 873271/p4t4p:p4t4p_nginx
+            - node_internal_api
+            - node_cors_proxy
+        image: 873271/gamerspot:gamerspot_nginx
         restart: always
         ports:
             - "80:80"
         container_name: nginx
-    node:
-        image: 873271/p4t4p:p4t4p_node
+    node_internal_api:
+        image: 873271/gamerspot:gamerspot_node_internal_api
         restart: always
         ports:
             - "3000:3000"
-        container_name: node
+        container_name: node_internal_api
+    node_cors_proxy:
+        image: 873271/gamerspot:gamerspot_node_cors_proxy
+        restart: always
+        ports:
+            - "8080:8080"
+        container_name: node_cors_proxy
