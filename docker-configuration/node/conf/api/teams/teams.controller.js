@@ -28,27 +28,56 @@ async function getTeams(req, res) {
 
   const PAGE_SIZE = 10;
   const skip = (page - 1) * PAGE_SIZE;
+  if (req.query.sponsor) {
+    return SPONSORModel.findOne({ _id: req.query.sponsor })
+      .select("_id")
+      .then((response) => {
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
 
-  return TEAMModel.find()
-    .select("name")
-    .populate("players")
-    .populate("sponsors")
-    .populate({
-      path: "owner",
-      select: "-_id -password -email",
-      populate: "postsId",
-      skip: skip,
-      limit: PAGE_SIZE,
-    })
-    .then((response) => {
-      if (response.length === 0 && page > 1)
-        return res.status(404).json({ message: "Page Not Found" });
+        return TEAMModel.find({ sponsors: response._id })
+          .populate({
+            path: "sponsors",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .select("-_id")
+          .then((response) => {
+            if (!response)
+              return res.status(404).json({ message: "Page Not Found" });
 
-      return res.json(response);
-    })
-    .catch((error) => {
-      return res.status(500).json(error);
-    });
+            return res.json(response);
+          })
+          .catch((error) => {
+            return res.status(500).json(error);
+          });
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  } else {
+    return TEAMModel.find()
+      .select("name")
+      .populate("players")
+      .populate("sponsors")
+      .populate({
+        path: "owner",
+        select: "-_id -password -email",
+        populate: "postsId",
+        skip: skip,
+        limit: PAGE_SIZE,
+      })
+      .then((response) => {
+        if (response.length === 0 && page > 1)
+          return res.status(404).json({ message: "Page Not Found" });
+
+        return res.json(response);
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  }
 }
 
 async function getTeamById(req, res) {
@@ -177,6 +206,9 @@ async function deleteTeam(req, res) {
 async function addPlayer(req, res) {
   const edited_gamer = setEditedGamerFields(req.params.id);
   const edited_team = setEditedTeamFields(req.body);
+  console.log(req.params.id);
+  console.log(req.body);
+  console.log("en controlador");
   return GAMERModel.findOneAndUpdate(
     { _id: req.body.player_id },
     edited_gamer,

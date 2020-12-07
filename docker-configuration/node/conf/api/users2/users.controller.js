@@ -270,11 +270,9 @@ async function refreshToken(req, res) {
       })
       .populate({
         path: 'team',
-        select: '-_id'
       })
       .populate({
         path: 'sponsor',
-        select: '-_id'
       })
       .populate({
         path: 'posts',

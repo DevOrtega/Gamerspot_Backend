@@ -9,7 +9,7 @@ router.post('/refresh-token', controller.refreshToken);
 router.post('/revoke-token', controller.revokeToken);
 router.patch('/:id', authenticateToken, authenticateUser, controller.editTeam);
 router.delete('/:id', authenticateToken, authenticateUser, controller.deleteTeam);
-router.patch('/:id/add_player', authenticateToken, authenticateUser, controller.addPlayer);
+router.patch('/:id/add_player', /*authenticateToken, authenticateUser,*/ controller.addPlayer);
 router.patch('/:id/delete_player', authenticateToken, authenticateUser, controller.deletePlayer);
 
 function authenticateToken(req, res, next) {
