@@ -45,7 +45,13 @@ async function getSponsors(req, res) {
             skip: skip,
             limit: PAGE_SIZE,
           })
-          .select("-_id")
+          .populate({
+            path: "owner",
+            select: "-_id -password -email",
+            populate: "postsId",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
           .then((response) => {
             if (!response)
               return res.status(404).json({ message: "Page Not Found" });
@@ -73,7 +79,6 @@ async function getSponsors(req, res) {
             skip: skip,
             limit: PAGE_SIZE,
           })
-          .select("-_id")
           .then((response) => {
             if (!response)
               return res.status(404).json({ message: "Page Not Found" });
@@ -89,7 +94,6 @@ async function getSponsors(req, res) {
       });
   } else {
     return SPONSORModel.find()
-      .select("-_id")
       .populate("teams")
       .populate("players")
       .populate({
@@ -222,7 +226,7 @@ async function deleteSponsor(req, res) {
         .then(() => {
           return USERModel.updateOne(
             { username: response[0].owner.username },
-            { $pull: { sponsor: req.params.id } }
+            { sponsor: null  }
           )
             .then(() => {
               return getSponsors(req, res);
@@ -307,7 +311,8 @@ async function addTeam(req, res) {
 async function deletePlayer(req, res) {
   const id = req.params.id;
   const player_id = req.body.player_id;
-
+console.log(id);
+console.log(player_id);
   return SPONSORModel.updateOne({ _id: id }, { $pull: { players: player_id } })
     .then(() => {
       return GAMERModel.updateOne(

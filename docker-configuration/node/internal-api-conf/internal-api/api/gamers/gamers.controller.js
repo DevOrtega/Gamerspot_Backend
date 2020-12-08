@@ -40,7 +40,12 @@ async function getGamers(req, res) {
             skip: skip,
             limit: PAGE_SIZE,
           })
-          .select("-_id")
+          .populate({
+            path: "owner",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
           .then((response) => {
             if (!response)
               return res.status(404).json({ message: "Page Not Found" });
@@ -55,20 +60,28 @@ async function getGamers(req, res) {
         return res.status(500).json(error);
       });
   } else if (req.query.team) {
+    console.log("este: " + req.query);
+    console.log("otro:");
+    console.log(req.query.team);
     return TEAMModel.findOne({ _id: req.query.team })
       .select("_id")
       .then((response) => {
         if (!response)
           return res.status(404).json({ message: "Page Not Found" });
-
-        return GAMERModel.find({ teams: response._id })
+        console.log("esta es la respeusta: " + response._id);
+        return GAMERModel.find({ team: response._id })
           .populate({
-            path: "teams",
+            path: "team",
             select: "-_id",
             skip: skip,
             limit: PAGE_SIZE,
           })
-          .select("-_id")
+          .populate({
+            path: "owner",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
           .then((response) => {
             if (!response)
               return res.status(404).json({ message: "Page Not Found" });
@@ -85,7 +98,7 @@ async function getGamers(req, res) {
   } else {
     return GAMERModel.find()
       .select("name")
-      .populate("teams")
+      .populate("team")
       .populate("sponsors")
       .populate({
         path: "owner",
@@ -211,7 +224,7 @@ async function deleteGamer(req, res) {
             .then(() => {
               return USERModel.updateOne(
                 { username: response[0].owner.username },
-                { $pull: { gamer: req.params.id } }
+                { gamer: null }
               )
                 .then(() => {
                   return getGamers(req, res);

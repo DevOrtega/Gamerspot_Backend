@@ -9,8 +9,8 @@ router.post('/refresh-token', controller.refreshToken);
 router.post('/revoke-token', controller.revokeToken);
 router.patch('/:id', authenticateToken, authenticateUser, controller.editSponsor);
 router.delete('/:id', authenticateToken, authenticateUser, controller.deleteSponsor);
-router.patch('/:id/add_player', authenticateToken, authenticateUser, controller.addPlayer);
-router.patch('/:id/delete_player', authenticateToken, authenticateUser, controller.deletePlayer);
+router.patch('/:id/add_player',  controller.addPlayer);
+router.patch('/:id/delete_player',  controller.deletePlayer);
 router.patch('/:id/add_team', authenticateToken, authenticateUser, controller.addTeam);
 router.patch('/:id/delete_team', authenticateToken, authenticateUser, controller.deleteTeam);
 
