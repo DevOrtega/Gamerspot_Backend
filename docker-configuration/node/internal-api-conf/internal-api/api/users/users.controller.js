@@ -282,11 +282,11 @@ async function loginUser(req, res) {
         return res.status(400).json({ message: "Invalid User Or Password" });
       }
 
-      const token = jwt.sign({ user: user_response }, process.env.TOKEN_KEY, {
+      const token = jwt.sign({ user: { _id: user_response._id, username: user_response.username, role: user_response.role } }, process.env.TOKEN_KEY, {
         expiresIn: 180,
       });
       const refresh_token = jwt.sign(
-        { user: user_response },
+        { user: { _id: user_response._id, username: user_response.username, role: user_response.role } },
         process.env.REFRESH_TOKEN_KEY,
         { expiresIn: 7776000 }
       );
@@ -366,7 +366,7 @@ async function refreshToken(req, res) {
           })
           .then((user_response) => {
             const token = jwt.sign(
-              { user: user_response },
+              { user: { _id: user_response._id, username: user_response.username, role: user_response.role } },
               process.env.TOKEN_KEY,
               { expiresIn: 180 }
             );
