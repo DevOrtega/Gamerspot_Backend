@@ -26,27 +26,93 @@ async function getGamers(req, res) {
 
   const PAGE_SIZE = 10;
   const skip = (page - 1) * PAGE_SIZE;
+  if (req.query.sponsor) {
+    return SPONSORModel.findOne({ _id: req.query.sponsor })
+      .select("_id")
+      .then((response) => {
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
 
-  return GAMERModel.find()
-    .select("_id")
-    .populate("teams")
-    .populate("sponsors")
-    .populate({
-      path: "owner",
-      select: "-_id -password -email",
-      populate: "postsId",
-      skip: skip,
-      limit: PAGE_SIZE,
-    })
-    .then((response) => {
-      if (response.length === 0 && page > 1)
-        return res.status(404).json({ message: "Page Not Found" });
+        return GAMERModel.find({ sponsors: response._id })
+          .populate({
+            path: "sponsors",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .populate({
+            path: "owner",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .then((response) => {
+            if (!response)
+              return res.status(404).json({ message: "Page Not Found" });
 
-      return res.json(response);
-    })
-    .catch((error) => {
-      return res.status(500).json(error);
-    });
+            return res.json(response);
+          })
+          .catch((error) => {
+            return res.status(500).json(error);
+          });
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  } else if (req.query.team) {
+    return TEAMModel.findOne({ _id: req.query.team })
+      .select("_id")
+      .then((response) => {
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
+        return GAMERModel.find({ team: response._id })
+          .populate({
+            path: "team",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .populate({
+            path: "owner",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .then((response) => {
+            if (!response)
+              return res.status(404).json({ message: "Page Not Found" });
+
+            return res.json(response);
+          })
+          .catch((error) => {
+            return res.status(500).json(error);
+          });
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  } else {
+    return GAMERModel.find()
+      .select("name")
+      .populate("team")
+      .populate("sponsors")
+      .populate({
+        path: "owner",
+        select: "-_id -password -email",
+        populate: "postsId",
+        skip: skip,
+        limit: PAGE_SIZE,
+      })
+      .then((response) => {
+        if (response.length === 0 && page > 1)
+          return res.status(404).json({ message: "Page Not Found" });
+
+        return res.json(response);
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  }
 }
 
 async function getGamerById(req, res) {
@@ -154,7 +220,7 @@ async function deleteGamer(req, res) {
             .then(() => {
               return USERModel.updateOne(
                 { username: response[0].owner.username },
-                { $pull: { gamer: req.params.id } }
+                { gamer: null }
               )
                 .then(() => {
                   return getGamers(req, res);

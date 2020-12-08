@@ -219,7 +219,6 @@ async function deletePost(req, res) {
               return res.status(500).json(error);
             })
           }
-          console.log(updateTagResponse);
         })
         .catch(error => {
           return res.status(500).json(error);

@@ -34,20 +34,20 @@ async function getUsers(req, res) {
   return USERModel.find()
     .select("-_id -password -email")
     .populate({
-      path: 'gamer',
-      select: '-_id'
+      path: "gamer",
+      select: "-_id",
     })
     .populate({
-      path: 'team',
-      select: '-_id'
+      path: "team",
+      select: "-_id",
     })
     .populate({
-      path: 'sponsor',
-      select: '-_id'
+      path: "sponsor",
+      select: "-_id",
     })
     .populate({
-      path: 'posts',
-      select: '-_id'
+      path: "posts",
+      select: "-_id",
     })
     .skip(skip)
     .limit(PAGE_SIZE)
@@ -64,16 +64,63 @@ async function getUsers(req, res) {
 
 async function getUserByUsername(req, res) {
   const username = req.params.username;
-
   if (req.token && req.token.user.username === username) {
     return USERModel.findOne({ username: username })
       .select("-password")
-      .populate("gamer")
-      .populate("team")
-      .populate("sponsor")
+      .populate({
+        path: "gamer",
+        populate: [
+          {
+            path: "team",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "sponsors",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "owner",
+            select: "-_id -password -email",
+          },
+        ],
+      })
+      .populate({
+        path: "team",
+        populate: [
+          {
+            path: "players",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "sponsors",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "owner",
+            select: "-_id -password -email",
+          },
+        ],
+      })
+      .populate({
+        path: "sponsor",
+        populate: "teams players owner",
+      })
       .populate("posts")
       .then((response) => {
-        if (!response) return res.status(404).json({ message: "Page Not Found" });
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
 
         return res.json(response);
       })
@@ -83,14 +130,41 @@ async function getUserByUsername(req, res) {
   } else {
     return USERModel.findOne({ username: username })
       .select("-_id -email -password")
-      .populate("sponsor")
-      .populate("team")
-      .populate("gamer")
+      .populate({
+        path: "sponsor",
+        populate: "teams players owner",
+      })
+      .populate({
+        path: "team",
+        populate: "players sponsors owner",
+      })
+      .populate({
+        path: "gamer",
+        populate: [
+          {
+            path: "team",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "sponsors",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "owner",
+            select: "-_id -password -email",
+          },
+        ],
+      })
       .populate("posts")
       .then((response) => {
         if (!response)
           return res.status(404).json({ message: "Page Not Found" });
-
         return res.json(response);
       })
       .catch((error) => {
@@ -107,89 +181,98 @@ async function registerUser(req, res) {
   req.body.password = bcrypt.hashSync(req.body.password, 10);
 
   return USERModel.create(req.body)
-    .then(async create_user_response => {
-      switch(req.body.role) {
+    .then(async (create_user_response) => {
+      switch (req.body.role) {
         case "Gamer":
           return GAMERModel.create({
             name: req.body.name,
             bornDate: req.body.bornDate,
             owner: create_user_response._id,
           })
-          .then(async gamer_response => {
-            return USERModel.findOneAndUpdate(
-              { _id : create_user_response._id },
-              { gamer: gamer_response._id },
-              { useFindAndModify: false, runValidators: true }
-            )
-            .then(() => {
-              return res.json(create_user_response);
+            .then(async (gamer_response) => {
+              return USERModel.findOneAndUpdate(
+                { _id: create_user_response._id },
+                { gamer: gamer_response._id },
+                { useFindAndModify: false, runValidators: true }
+              )
+                .then(() => {
+                  return res.json(create_user_response);
+                })
+                .catch((error) => {
+                  return res.status(500).json(error);
+                });
             })
-            .catch(error => {
+            .catch((error) => {
               return res.status(500).json(error);
-            })
-          })
-          .catch(error => {
-            return res.status(500).json(error);
-          })
-          
+            });
+
         case "Team":
           return TEAMModel.create({
             name: req.body.name,
-            owner: create_user_response._id
+            owner: create_user_response._id,
           })
-          .then(async team_response => {
-            return USERModel.findOneAndUpdate(
-              { _id : create_user_response._id },
-              { team: team_response._id },
-              { useFindAndModify: false, runValidators: true }
-            )
-            .then(() => {
-              return res.json(create_user_response);
+            .then(async (team_response) => {
+              return USERModel.findOneAndUpdate(
+                { _id: create_user_response._id },
+                { team: team_response._id },
+                { useFindAndModify: false, runValidators: true }
+              )
+                .then(() => {
+                  return res.json(create_user_response);
+                })
+                .catch((error) => {
+                  return res.status(500).json(error);
+                });
             })
-            .catch(error => {
+            .catch((error) => {
               return res.status(500).json(error);
-            })
-          })
-          .catch(error => {
-            return res.status(500).json(error);
-          })
+            });
 
         case "Sponsor":
           return SPONSORModel.create({
             name: req.body.name,
-            owner: create_user_response._id
+            owner: create_user_response._id,
           })
-          .then(async sponsor_response => {
-            return USERModel.findOneAndUpdate(
-              { _id : create_user_response._id },
-              { sponsor: sponsor_response._id },
-              { useFindAndModify: false, runValidators: true }
-            )
-            .then(() => {
-              return res.json(create_user_response);
+            .then(async (sponsor_response) => {
+              return USERModel.findOneAndUpdate(
+                { _id: create_user_response._id },
+                { sponsor: sponsor_response._id },
+                { useFindAndModify: false, runValidators: true }
+              )
+                .then(() => {
+                  return res.json(create_user_response);
+                })
+                .catch((error) => {
+                  return res.status(500).json(error);
+                });
             })
-            .catch(error => {
+            .catch((error) => {
               return res.status(500).json(error);
-            })
-          })
-          .catch(error => {
-            return res.status(500).json(error);
-          })
+            });
       }
     })
     .catch((error) => {
       return res.status(500).json(error);
-    })
+    });
 }
 
 async function loginUser(req, res) {
   return USERModel.findOne({
     $or: [{ username: req.body.username }, { email: req.body.username }],
   })
-    .populate('gamer')
-    .populate('team')
-    .populate('sponsor')
-    .populate('posts')
+    .populate({
+      path: "gamer",
+      populate: "team sponsors owner",
+    })
+    .populate({
+      path: "team",
+      populate: "players sponsors owner",
+    })
+    .populate({
+      path: "sponsor",
+      populate: "teams players owner",
+    })
+    .populate("posts")
     .then((user_response) => {
       if (!user_response) {
         return res.status(400).json({ message: "Invalid User Or Password" });
@@ -258,58 +341,59 @@ async function refreshToken(req, res) {
     const refresh_token = getCookies(req)["refresh_token"];
 
     return REFRESHTOKENModel.findOne({ refresh_token: refresh_token })
-    .then((token_response) => {
-      if (!token_response) return res.status(404).json({ message: "Bad Request" });
+      .then((token_response) => {
+        if (!token_response)
+          return res.status(404).json({ message: "Bad Request" });
 
-      return USERModel.findOne({
-        username: token_response.access_token.username,
-      })
-      .populate({
-        path: 'gamer',
-        select: '-_id'
-      })
-      .populate({
-        path: 'team',
-        select: '-_id'
-      })
-      .populate({
-        path: 'sponsor',
-        select: '-_id'
-      })
-      .populate({
-        path: 'posts',
-        select: '-_id'
-      })
-      .then((user_response) => {
-        const token = jwt.sign(
-          { user: { _id: user_response._id, username: user_response.username, role: user_response.role } },
-          process.env.TOKEN_KEY,
-          { expiresIn: 180 }
-        );
-
-        const access_token = {
-          username: user_response.username,
-          token: token,
-        };
-
-        return REFRESHTOKENModel.updateOne(
-          { refresh_token: refresh_token },
-          { access_token: access_token }
-        )
-        .then(() => {
-          return res.json({ token: token });
+        return USERModel.findOne({
+          username: token_response.access_token.username,
         })
-        .catch((error) => {
-          return res.status(500).json(error);
-        });
+          .populate({
+            path: "gamer",
+            populate: "team sponsors owner",
+          })
+          .populate({
+            path: "team",
+            populate: "players sponsors owner",
+          })
+          .populate({
+            path: "sponsor",
+            populate: "teams players owner",
+          })
+          .populate({
+            path: "posts",
+            select: "-_id",
+          })
+          .then((user_response) => {
+            const token = jwt.sign(
+              { user: { _id: user_response._id, username: user_response.username, role: user_response.role } },
+              process.env.TOKEN_KEY,
+              { expiresIn: 180 }
+            );
+
+            const access_token = {
+              username: user_response.username,
+              token: token,
+            };
+
+            return REFRESHTOKENModel.updateOne(
+              { refresh_token: refresh_token },
+              { access_token: access_token }
+            )
+              .then(() => {
+                return res.json({ token: token });
+              })
+              .catch((error) => {
+                return res.status(500).json(error);
+              });
+          })
+          .catch((error) => {
+            return res.status(500).json(error);
+          });
       })
       .catch((error) => {
         return res.status(500).json(error);
       });
-    })
-    .catch((error) => {
-      return res.status(500).json(error);
-    });
   } catch (error) {
     return res.status(500).json(error);
   }
@@ -339,52 +423,53 @@ async function editUser(req, res) {
     edited_user,
     { useFindAndModify: false, runValidators: true }
   )
-  .then((user_response) => {
-    if (!user_response) return res.status(404).json({ message: "Page Not Found" });
-    switch(req.body.role) {
-      case "Gamer":
-        return GAMERModel.findOneAndUpdate(
-          { owner: user_response._id },
-          edited_user,
-          { useFindAndModify: false, runValidators: true }
-        )
-        .then(role_response => {
-          return res.json(role_response);
-        })
-        .catch(error => {
-          return res.status(500).json(error);
-        })
-        
-      case "Team":
-        return TEAMModel.findOneAndUpdate(
-          { owner: user_response._id },
-          edited_user,
-          { useFindAndModify: false, runValidators: true }
-        )
-        .then(role_response => {
-          return res.json(role_response);
-        })
-        .catch(error => {
-          return res.status(500).json(error);
-        })
+    .then((user_response) => {
+      if (!user_response)
+        return res.status(404).json({ message: "Page Not Found" });
+      switch (req.body.role) {
+        case "Gamer":
+          return GAMERModel.findOneAndUpdate(
+            { owner: user_response._id },
+            edited_user,
+            { useFindAndModify: false, runValidators: true }
+          )
+            .then((role_response) => {
+              return res.json(role_response);
+            })
+            .catch((error) => {
+              return res.status(500).json(error);
+            });
 
-      case "Sponsor":
-        return SPONSORModel.findOneAndUpdate(
-          { owner: user_response._id },
-          edited_user,
-          { useFindAndModify: false, runValidators: true }
-        )
-        .then(role_response => {
-          return res.json(role_response);
-        })
-        .catch(error => {
-          return res.status(500).json(error);
-        })
-    }
-  })
-  .catch((error) => {
-    return res.status(400).json(error);
-  });
+        case "Team":
+          return TEAMModel.findOneAndUpdate(
+            { owner: user_response._id },
+            edited_user,
+            { useFindAndModify: false, runValidators: true }
+          )
+            .then((role_response) => {
+              return res.json(role_response);
+            })
+            .catch((error) => {
+              return res.status(500).json(error);
+            });
+
+        case "Sponsor":
+          return SPONSORModel.findOneAndUpdate(
+            { owner: user_response._id },
+            edited_user,
+            { useFindAndModify: false, runValidators: true }
+          )
+            .then((role_response) => {
+              return res.json(role_response);
+            })
+            .catch((error) => {
+              return res.status(500).json(error);
+            });
+      }
+    })
+    .catch((error) => {
+      return res.status(400).json(error);
+    });
 }
 
 async function deleteUser(req, res) {
@@ -448,7 +533,7 @@ function setEditedUserFields(req_body) {
   if (req_body.email !== undefined) {
     edited_user.email = req_body.email;
   }
-  
+
   if (req_body.country !== undefined) {
     edited_user.country = req_body.country;
   }

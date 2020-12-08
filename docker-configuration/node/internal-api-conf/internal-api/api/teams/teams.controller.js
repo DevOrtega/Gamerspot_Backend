@@ -28,27 +28,90 @@ async function getTeams(req, res) {
 
   const PAGE_SIZE = 10;
   const skip = (page - 1) * PAGE_SIZE;
+  if (req.query.player) {
+    return GAMERModel.findOne({ _id: req.query.player })
+      .select("_id")
+      .populate(team)
+      .then((response) => {
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
 
-  return TEAMModel.find()
-    .select("name")
-    .populate("players")
-    .populate("sponsors")
-    .populate({
-      path: "owner",
-      select: "-_id -password -email",
-      populate: "postsId",
-      skip: skip,
-      limit: PAGE_SIZE,
-    })
-    .then((response) => {
-      if (response.length === 0 && page > 1)
-        return res.status(404).json({ message: "Page Not Found" });
+        return TEAMModel.find({ players: response._id })
+          .populate({
+            path: "players",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .select("-_id")
+          .then((response) => {
+            if (!response)
+              return res.status(404).json({ message: "Page Not Found" });
 
-      return res.json(response);
-    })
-    .catch((error) => {
-      return res.status(500).json(error);
-    });
+            return res.json(response);
+          })
+          .catch((error) => {
+            return res.status(500).json(error);
+          });
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  } else if (req.query.sponsors) {
+    return SPONSORModel.findOne({ _id: req.query.sponsors })
+      .select("_id")
+      .then((response) => {
+        if (!response)
+          return res.status(404).json({ message: "Page Not Found" });
+
+        return TEAMModel.find({ sponsors: response._id })
+          .populate({
+            path: "sponsors",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .populate({
+            path: "owner",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
+          .then((response) => {
+            if (!response)
+              return res.status(404).json({ message: "Page Not Found" });
+
+            return res.json(response);
+          })
+          .catch((error) => {
+            return res.status(500).json(error);
+          });
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  } else {
+    return TEAMModel.find()
+      .select("name")
+      .populate("players")
+      .populate("sponsors")
+      .populate({
+        path: "owner",
+        select: "-_id -password -email",
+        populate: "postsId",
+        skip: skip,
+        limit: PAGE_SIZE,
+      })
+      .then((response) => {
+        if (response.length === 0 && page > 1)
+          return res.status(404).json({ message: "Page Not Found" });
+
+        return res.json(response);
+      })
+      .catch((error) => {
+        return res.status(500).json(error);
+      });
+  }
 }
 
 async function getTeamById(req, res) {
@@ -98,7 +161,6 @@ async function createTeam(req, res) {
   return TEAMModel.create(req.body)
     .then((response) => {
       const edited_user = setEditedUserFields(response);
-      console.log(edited_user);
       return USERModel.findOneAndUpdate({ _id: response.owner }, edited_user, {
         useFindAndModify: false,
         runValidators: true,
@@ -156,7 +218,7 @@ async function deleteTeam(req, res) {
         .then(() => {
           return USERModel.updateOne(
             { username: response[0].owner.username },
-            { $pull: { team: req.params.id } }
+            { team: null }
           )
             .then(() => {
               return getTeams(req, res);
@@ -207,10 +269,9 @@ async function addPlayer(req, res) {
 async function deletePlayer(req, res) {
   const id = req.params.id;
   const player_id = req.body.player_id;
-
   return TEAMModel.updateOne({ _id: id }, { $pull: { players: player_id } })
     .then(() => {
-      return GAMERModel.updateOne({ _id: player_id }, { $pull: { team: id } })
+      return GAMERModel.updateOne({ _id: player_id }, { team: null })
         .then(() => {
           return getTeamById(req, res);
         })
