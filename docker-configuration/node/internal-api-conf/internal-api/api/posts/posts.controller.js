@@ -56,7 +56,8 @@ async function getPosts(req, res) {
       skip: skip,
       limit: PAGE_SIZE
     })
-    .select('_id text createdAt owner')
+    .populate('tags')
+    .select('_id text createdAt owner tags')
     .then(response => {
       if (!response) return res.status(404).json({ message: "Page Not Found" });
 
