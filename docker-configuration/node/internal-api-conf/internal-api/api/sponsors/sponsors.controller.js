@@ -226,7 +226,7 @@ async function deleteSponsor(req, res) {
         .then(() => {
           return USERModel.updateOne(
             { username: response[0].owner.username },
-            { sponsor: null  }
+            { sponsor: null }
           )
             .then(() => {
               return getSponsors(req, res);
@@ -311,8 +311,6 @@ async function addTeam(req, res) {
 async function deletePlayer(req, res) {
   const id = req.params.id;
   const player_id = req.body.player_id;
-console.log(id);
-console.log(player_id);
   return SPONSORModel.updateOne({ _id: id }, { $pull: { players: player_id } })
     .then(() => {
       return GAMERModel.updateOne(
@@ -334,7 +332,6 @@ console.log(player_id);
 async function deleteTeam(req, res) {
   const id = req.params.id;
   const team_id = req.body.team_id;
-
   return SPONSORModel.updateOne({ _id: id }, { $pull: { teams: team_id } })
     .then(() => {
       return TEAMModel.updateOne({ _id: team_id }, { $pull: { sponsors: id } })

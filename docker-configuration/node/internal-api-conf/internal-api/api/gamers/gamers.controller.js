@@ -60,15 +60,11 @@ async function getGamers(req, res) {
         return res.status(500).json(error);
       });
   } else if (req.query.team) {
-    console.log("este: " + req.query);
-    console.log("otro:");
-    console.log(req.query.team);
     return TEAMModel.findOne({ _id: req.query.team })
       .select("_id")
       .then((response) => {
         if (!response)
           return res.status(404).json({ message: "Page Not Found" });
-        console.log("esta es la respeusta: " + response._id);
         return GAMERModel.find({ team: response._id })
           .populate({
             path: "team",

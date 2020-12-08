@@ -57,9 +57,8 @@ async function getTeams(req, res) {
       .catch((error) => {
         return res.status(500).json(error);
       });
-  }
-  else if (req.query.sponsor) {
-    return SPONSORModel.findOne({ _id: req.query.sponsor })
+  } else if (req.query.sponsors) {
+    return SPONSORModel.findOne({ _id: req.query.sponsors })
       .select("_id")
       .then((response) => {
         if (!response)
@@ -72,7 +71,12 @@ async function getTeams(req, res) {
             skip: skip,
             limit: PAGE_SIZE,
           })
-          .select("-_id")
+          .populate({
+            path: "owner",
+            select: "-_id",
+            skip: skip,
+            limit: PAGE_SIZE,
+          })
           .then((response) => {
             if (!response)
               return res.status(404).json({ message: "Page Not Found" });
@@ -157,7 +161,6 @@ async function createTeam(req, res) {
   return TEAMModel.create(req.body)
     .then((response) => {
       const edited_user = setEditedUserFields(response);
-      console.log(edited_user);
       return USERModel.findOneAndUpdate({ _id: response.owner }, edited_user, {
         useFindAndModify: false,
         runValidators: true,
@@ -236,9 +239,6 @@ async function deleteTeam(req, res) {
 async function addPlayer(req, res) {
   const edited_gamer = setEditedGamerFields(req.params.id);
   const edited_team = setEditedTeamFields(req.body);
-  console.log(req.params.id);
-  console.log(req.body);
-  console.log("en controlador");
   return GAMERModel.findOneAndUpdate(
     { _id: req.body.player_id },
     edited_gamer,
@@ -269,24 +269,17 @@ async function addPlayer(req, res) {
 async function deletePlayer(req, res) {
   const id = req.params.id;
   const player_id = req.body.player_id;
-  console.log("eo "+typeof id);
-  console.log("oe "+player_id);
   return TEAMModel.updateOne({ _id: id }, { $pull: { players: player_id } })
     .then(() => {
-      return GAMERModel.updateOne(
-        { _id: player_id },
-        { team: null  }
-      )
+      return GAMERModel.updateOne({ _id: player_id }, { team: null })
         .then(() => {
           return getTeamById(req, res);
         })
         .catch((error) => {
-          console.log("aquí??");
           return res.status(500).json(error);
         });
     })
     .catch((error) => {
-      console.log("o aquí??");
       return res.status(500).json(error);
     });
 }

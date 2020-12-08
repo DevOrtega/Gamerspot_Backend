@@ -11,8 +11,8 @@ router.patch('/:id', authenticateToken, authenticateUser, controller.editSponsor
 router.delete('/:id', authenticateToken, authenticateUser, controller.deleteSponsor);
 router.patch('/:id/add_player',  controller.addPlayer);
 router.patch('/:id/delete_player',  controller.deletePlayer);
-router.patch('/:id/add_team', authenticateToken, authenticateUser, controller.addTeam);
-router.patch('/:id/delete_team', authenticateToken, authenticateUser, controller.deleteTeam);
+router.patch('/:id/add_team', controller.addTeam);
+router.patch('/:id/delete_team', controller.deleteTeam);
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];

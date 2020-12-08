@@ -64,9 +64,7 @@ async function getUsers(req, res) {
 
 async function getUserByUsername(req, res) {
   const username = req.params.username;
-  console.log("what?");
   if (req.token && req.token.user.username === username) {
-    console.log("poooooor?");
     return USERModel.findOne({ username: username })
       .select("-password")
       .populate({
@@ -94,7 +92,26 @@ async function getUserByUsername(req, res) {
       })
       .populate({
         path: "team",
-        populate: "sponsors players owner",
+        populate: [
+          {
+            path: "players",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "sponsors",
+            populate: {
+              path: "owner",
+              select: "-_id -password -email",
+            },
+          },
+          {
+            path: "owner",
+            select: "-_id -password -email",
+          },
+        ],
       })
       .populate({
         path: "sponsor",
@@ -111,7 +128,6 @@ async function getUserByUsername(req, res) {
         return res.status(500).json(error);
       });
   } else {
-    console.log("llego aqui");
     return USERModel.findOne({ username: username })
       .select("-_id -email -password")
       .populate({
@@ -149,7 +165,6 @@ async function getUserByUsername(req, res) {
       .then((response) => {
         if (!response)
           return res.status(404).json({ message: "Page Not Found" });
-        console.log(response);
         return res.json(response);
       })
       .catch((error) => {
