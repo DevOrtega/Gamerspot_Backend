@@ -9,8 +9,16 @@ async function getTags(req, res) {
 }
 
 async function getTagByName(req, res) {
-  return TAGModel.find({name: req.params.name})
-  .populate('posts')
+  return TAGModel.findOne({name: '#'+req.params.name})
+  .populate({
+    path: 'posts',
+    populate: {
+      path: 'owner',
+      populate: {
+        path: 'gamer team sponsor'
+      }
+    },
+  })
   .then(response => {
     if (!response) return res.status(404).json({ message: "Page Not Found" });
     return res.json(response);
