@@ -25,12 +25,19 @@ import { ProfileStatisticsNodataComponent } from './components/profile-statistic
 import { ProfileStatisticsMainComponent } from './components/profile-statistics-main/profile-statistics-main.component';
 import { ProfilePostsComponent } from './components/profile-posts/profile-posts.component';
 import { ProfileEditorComponent } from './components/profile-editor/profile-editor.component';
-import { FeedsPostComponent } from './components/feed-post/feed-post.component';
-import { FeedsGetComponent } from './components/feed-get/feed-get.component';
+import { PostCreateComponent } from './components/post-create/post-create.component';
+import { PostGetComponent } from './components/post-get/post-get.component';
 import { PrettyJsonPipe } from './pretty-json.pipe';
 import { ProfileStatisticsTftComponent } from './components/profile-statistics-tft/profile-statistics-tft.component';
 import { AddPlayersComponent } from './components/add-players/add-players.component';
-
+import { AngularFireModule } from '@angular/fire';
+import { environment } from 'src/environments/environment';
+import { AngularFireStorageModule } from '@angular/fire/storage';
+import { AngularFirestoreModule } from '@angular/fire/firestore';
+import { TagComponent } from './pages/tag/tag.component';
+import { ShowTeamComponent } from './components/show-team/show-team.component';
+import { ShowSponsorsComponent } from './components/show-sponsors/show-sponsors.component';
+import { AddTeamsComponent } from './components/add-teams/add-teams.component';
 
 @NgModule({
   declarations: [
@@ -49,18 +56,26 @@ import { AddPlayersComponent } from './components/add-players/add-players.compon
     ProfilePostsComponent,
     ProfileStatisticsLolComponent,
     ProfileEditorComponent,
-    FeedsPostComponent,
-    FeedsGetComponent,
+    PostCreateComponent,
+    PostGetComponent,
     PrettyJsonPipe,
     ProfileStatisticsTftComponent,
-    AddPlayersComponent
+    AddPlayersComponent,
+    TagComponent,
+    AddTeamsComponent,
+    ShowTeamComponent,
+    ShowSponsorsComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule
+    HttpClientModule,
+    AngularFireModule.initializeApp(environment.firebaseConfig),
+    AngularFireStorageModule,
+    AngularFirestoreModule
+
   ],
   providers: [
     DatePipe,

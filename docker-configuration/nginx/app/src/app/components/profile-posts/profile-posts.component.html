@@ -5,11 +5,11 @@
     </div>
     <div *ngIf="posts && posts.length > 0">
         <div class="profile-posts__feed-get" *ngFor="let post of posts; let idx = index">
-            <app-feed-get
-            [feed]="post"
+            <app-post-get
+            [post]="post"
             [modalIndex]="idx"
-            (feedToDelete)="removePost($event)">
-            </app-feed-get>
+            (deletePostEmitter)="deletePost($event)">
+            </app-post-get>
         </div>
     </div>
     <div *ngIf="posts && posts.length === 0" class="default-text">

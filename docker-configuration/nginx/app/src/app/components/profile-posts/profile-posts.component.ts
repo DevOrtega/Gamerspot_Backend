@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Post } from 'src/app/interfaces/post';
 import { ButtonsService } from 'src/app/services/buttons/buttons.service';
-import { FeedsService } from 'src/app/services/feeds/feeds.service';
+import { PostsService } from 'src/app/services/posts/posts.service';
 
 @Component({
   selector: 'app-profile-posts',
@@ -15,10 +15,10 @@ export class ProfilePostsComponent implements OnInit, OnDestroy {
   private usernameParam: string;
 
   private getParamsSubscription: Subscription;
-  private removePostSubscription: Subscription;
+  private deletePostSubscription: Subscription;
 
   constructor(
-    private postService: FeedsService,
+    private postService: PostsService,
     private route: ActivatedRoute,
     private buttonService: ButtonsService
   ) {
@@ -41,7 +41,7 @@ export class ProfilePostsComponent implements OnInit, OnDestroy {
     })
   }
 
-  private showPosts() {
+  private showPosts(): void {
     this.postService.getPosts(this.usernameParam).subscribe(posts => {
       this.posts = posts;
 
@@ -55,8 +55,8 @@ export class ProfilePostsComponent implements OnInit, OnDestroy {
     });
   }
 
-  public removePost(post) {
-    this.removePostSubscription = this.postService.removePost(post).subscribe(() => {
+  public deletePost(post: Post): void {
+    this.deletePostSubscription = this.postService.deletePost(post).subscribe(() => {
       this.showPosts()
     })
   }
@@ -66,8 +66,8 @@ export class ProfilePostsComponent implements OnInit, OnDestroy {
       this.getParamsSubscription.unsubscribe();
     }
 
-    if (this.removePostSubscription) {
-      this.removePostSubscription.unsubscribe();
+    if (this.deletePostSubscription) {
+      this.deletePostSubscription.unsubscribe();
     }
   }
 }

@@ -29,7 +29,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private registerUserSubscription: Subscription;
 
   constructor(
-    private formBuilder: FormBuilder, 
+    private formBuilder: FormBuilder,
     private router: Router,
     private authService: AuthService,
     private userService: UsersService,
@@ -97,7 +97,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   public saveUser(): void {
     let newUser = {...this.registerForm.value};
-    
+
     delete newUser.confirmPassword;
 
     this.loading = true;

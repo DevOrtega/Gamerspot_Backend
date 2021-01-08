@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
-import { User } from 'src/app/interfaces/user';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import jwtDecode from 'jwt-decode';
 
+import { User } from 'src/app/interfaces/user';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +17,10 @@ export class AuthService {
 
   private _refreshTokenTimeout;
 
-  constructor(private router: Router, private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
     this.userSubject = new BehaviorSubject<User>(null);
     this.user = this.userSubject.asObservable();
   }
@@ -69,7 +72,7 @@ export class AuthService {
 
   public refreshToken() {
     return this.http.post<any>(`${environment.apiUrl}/users/refresh-token`, {}, { withCredentials: true })
-    .pipe(map((user) => {
+    .pipe(map(user => {
       const tokenData : any = jwtDecode(user.token);
       const userData = JSON.parse(JSON.stringify(tokenData.user));
 
@@ -79,6 +82,7 @@ export class AuthService {
 
       this.startRefreshTokenTimer(tokenData.exp);
       localStorage.setItem('token', JSON.stringify(user.token))
+
       return user;
     }))
   }
