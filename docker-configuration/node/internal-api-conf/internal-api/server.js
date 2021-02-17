@@ -10,8 +10,8 @@ mongoose.set('useCreateIndex', true);
 const app = express();
 
 app.use(cors({
-  //origin: 'http://ec2-15-237-13-78.eu-west-3.compute.amazonaws.com',
-  origin: 'http://localhost:4200',
+  origin: 'http://ec2-15-237-13-78.eu-west-3.compute.amazonaws.com',
+  //origin: 'http://localhost:4200',
   credentials: true
 }));
 app.use(cookieParser());
