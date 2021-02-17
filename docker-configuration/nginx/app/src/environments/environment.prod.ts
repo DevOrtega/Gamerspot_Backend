@@ -9,7 +9,8 @@ export const environment = {
   tftUrl:"tft/summoner/v1/summoners/by-name/",
   tftStatsUrl:"tft/league/v1/entries/by-summoner/",
   restCountriesUrl: "https://restcountries.eu/rest/v2",
-  riotAPIKey: "RGAPI-776bf16f-cf1d-4bc9-b9bd-ca9bbd9686a8",
+  riotLOLAPIKey: "RGAPI-dde03019-2c4f-40c4-b457-3051115c8835",
+  riotTFTAPIKey: "RGAPI-6600ea2f-9994-402f-a2d0-511ac36afd73",
   trackerAPIKey: "cfe19ea4-d2a6-4667-b9bd-da5f473c6baf",
   firebaseConfig: {
     apiKey: "AIzaSyD3MSbJI8LsE8kQPfRN8QV8MMhE4KcUg9k",
