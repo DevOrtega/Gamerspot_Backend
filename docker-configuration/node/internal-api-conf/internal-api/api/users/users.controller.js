@@ -315,7 +315,9 @@ async function loginUser(req, res) {
           return REFRESHTOKENModel.create(refresh_token_obj)
             .then(() => {
               const cookieOptions = {
-                sameSite: "strict",
+                //sameSite: "strict",
+                sameSite: "none",
+                secure: true,
                 httpOnly: true,
                 maxAge: 90 * 24 * 60 * 60 * 1000,
               };

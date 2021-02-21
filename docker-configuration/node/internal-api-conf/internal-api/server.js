@@ -8,10 +8,13 @@ mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD
 mongoose.set('useCreateIndex', true);
 
 const app = express();
+//const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 app.use(cors({
-  origin: 'http://ec2-15-237-13-78.eu-west-3.compute.amazonaws.com',
   //origin: 'http://localhost:4200',
+  //origin: 'http://ec2-15-237-13-78.eu-west-3.compute.amazonaws.com',
+  origin: 'https://gamerspot.netlify.app',
   credentials: true
 }));
 app.use(cookieParser());
@@ -31,4 +34,4 @@ app.use('/sponsors', sponsorsRouter);
 app.use('/posts', postsRouter);
 app.use('/tags', tagsRouter);
 
-app.listen(3000);
+app.listen(port);
